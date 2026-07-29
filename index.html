@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Mon Suivi">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#F1F2F6">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<title>Mon Suivi</title>
+<style>
+  :root{
+    --bg:#F1F2F6;
+    --card:#FFFFFF;
+    --ink:#171A21;
+    --ink-soft:#8A8F9B;
+    --line:#E7E8EE;
+    --accent:#FFC94A;
+    --accent-ink:#8A5B00;
+    --ok:#3DBE7A;
+    --danger:#E1543D;
+    --radius:18px;
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-top: env(safe-area-inset-top, 0px);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    height:100%; overscroll-behavior-y:none;}
+  #app{max-width:520px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;position:relative;}
+
+  /* ---------- Top tabs (per-section) ---------- */
+  .toptabs{display:flex;padding:calc(14px + var(--safe-top)) 20px 0 20px;gap:28px;background:var(--bg);position:sticky;top:0;z-index:5;}
+  .toptab{font-size:13px;font-weight:800;letter-spacing:.04em;color:var(--ink-soft);
+    padding-bottom:12px;border-bottom:3px solid transparent;cursor:pointer;text-transform:uppercase;}
+  .toptab.active{color:var(--ink);border-bottom-color:var(--accent);}
+  .subrow{display:flex;justify-content:space-between;align-items:center;padding:14px 20px 6px;}
+  .chip{display:inline-flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--line);
+    color:var(--ink-soft);font-weight:700;font-size:12px;padding:8px 16px;border-radius:999px;}
+  .iconbtn{width:38px;height:38px;border-radius:12px;background:var(--card);border:1px solid var(--line);
+    display:flex;align-items:center;justify-content:center;color:var(--ink);}
+
+  /* ---------- Content ---------- */
+  .content{flex:1;padding:6px 14px calc(96px + var(--safe-bottom));}
+  .empty{text-align:center;color:var(--ink-soft);padding:60px 24px;font-size:14px;line-height:1.6;}
+  .empty b{display:block;color:var(--ink);font-size:17px;margin-bottom:8px;font-weight:800;}
+
+  /* ---------- Episode / show card ---------- */
+  .card{display:flex;background:var(--card);border-radius:var(--radius);margin:10px 0;overflow:hidden;
+    box-shadow:0 1px 2px rgba(20,20,30,.05), 0 6px 16px rgba(20,20,30,.04); position:relative;}
+  .poster{width:92px;min-width:92px;background:#dcdde3 center/cover no-repeat;}
+  .cardbody{flex:1;padding:12px 10px 12px 14px;display:flex;flex-direction:column;justify-content:center;gap:4px;min-width:0;}
+  .badge-row{display:flex;align-items:center;gap:8px;}
+  .badge{display:inline-flex;align-items:center;gap:4px;border:1.4px solid var(--ink);border-radius:999px;
+    padding:3px 10px 3px 12px;font-size:11px;font-weight:800;letter-spacing:.02em;max-width:170px;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-transform:uppercase;}
+  .badge svg{flex:none;}
+  .se{font-size:19px;font-weight:800;margin-top:2px;}
+  .plus{font-size:12px;font-weight:800;color:var(--ink-soft);margin-left:4px;}
+  .tag{font-size:10px;font-weight:800;background:var(--accent);color:var(--accent-ink);border-radius:6px;
+    padding:3px 7px;margin-left:6px;text-transform:uppercase;letter-spacing:.03em;}
+  .title{font-size:14.5px;color:#3a3d46;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .date-sub{font-size:12.5px;color:var(--ink-soft);margin-top:2px;font-weight:600;}
+  .check{width:56px;min-width:56px;display:flex;align-items:center;justify-content:center;}
+  .checkbtn{width:38px;height:38px;border-radius:50%;background:var(--bg);border:none;
+    display:flex;align-items:center;justify-content:center;color:#B9BCC6;transition:transform .12s ease;}
+  .checkbtn:active{transform:scale(.88);}
+  .checkbtn.done{background:#EAF9F1;color:var(--ok);}
+  .removeX{position:absolute;top:6px;right:6px;width:22px;height:22px;border-radius:50%;background:rgba(20,20,30,.55);
+    color:#fff;border:none;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;}
+
+  /* ---------- Search / discover ---------- */
+  .searchwrap{padding:10px 20px 4px;position:sticky;top:0;background:var(--bg);z-index:5;}
+  .searchbar{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);
+    border-radius:14px;padding:10px 14px;}
+  .searchbar input{border:none;outline:none;background:transparent;font-size:15px;flex:1;color:var(--ink);font-family:inherit;}
+  .segrow{display:flex;background:#E7E8EE;border-radius:12px;padding:4px;margin:12px 20px 0;gap:4px;}
+  .seg{flex:1;text-align:center;padding:9px 0;border-radius:9px;font-size:13px;font-weight:800;color:var(--ink-soft);}
+  .seg.active{background:var(--card);color:var(--ink);}
+  .resrow{display:flex;align-items:center;gap:12px;background:var(--card);border-radius:16px;padding:10px;margin:10px 0;}
+  .resimg{width:52px;height:74px;border-radius:8px;background:#dcdde3 center/cover no-repeat;flex:none;}
+  .resinfo{flex:1;min-width:0;}
+  .resinfo .name{font-weight:800;font-size:14.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .resinfo .meta{font-size:12px;color:var(--ink-soft);margin-top:2px;}
+  .addbtn{width:34px;height:34px;border-radius:50%;border:1.6px solid var(--ink);background:transparent;
+    display:flex;align-items:center;justify-content:center;color:var(--ink);flex:none;font-size:18px;font-weight:700;}
+  .addbtn.added{background:var(--ok);border-color:var(--ok);color:#fff;}
+
+  .progress-track{width:100%;height:6px;border-radius:999px;background:#E7E8EE;margin-top:8px;overflow:hidden;}
+  .progress-fill{height:100%;border-radius:999px;background:var(--ok);transition:width .2s ease;}
+  .progress-fill.finished{background:#8B5CF6;}
+
+  .filterrow{padding:2px 6px 10px;position:relative;}
+  .filterselect{width:100%;background:var(--card);border:1px solid var(--line);border-radius:12px;
+    padding:11px 38px 11px 14px;font-size:13.5px;font-weight:700;color:var(--ink);font-family:inherit;
+    -webkit-appearance:none;appearance:none;}
+  .filterrow .filterchevron{position:absolute;right:22px;top:50%;transform:translateY(-50%) rotate(90deg);
+    color:var(--ink-soft);pointer-events:none;}
+
+  /* ---------- Détail série ---------- */
+  .card{cursor:pointer;}
+  .detailhero{position:relative;height:220px;background:#dcdde3 center/cover no-repeat;}
+  .detailhero::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0) 40%,rgba(0,0,0,.65) 100%);}
+  .backrow{position:absolute;top:calc(14px + var(--safe-top));left:14px;z-index:2;}
+  .backbtn{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.9);border:none;
+    display:flex;align-items:center;justify-content:center;color:var(--ink);}
+  .herotitle{position:absolute;left:18px;right:18px;bottom:14px;z-index:2;color:#fff;font-size:22px;font-weight:800;
+    text-shadow:0 1px 4px rgba(0,0,0,.3);}
+  .herometa{position:absolute;left:18px;right:18px;bottom:0;z-index:2;}
+  .seasonlabel{font-size:12.5px;font-weight:800;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em;
+    margin:20px 6px 8px;}
+  .seasonhead{display:flex;align-items:center;justify-content:space-between;cursor:pointer;
+    margin:20px 6px 8px;padding:2px 0;}
+  .seasonhead .seasonlabel{margin:0;}
+  .seasoncount{font-size:12px;font-weight:600;color:var(--ink-soft);}
+  .seasonchevron{transition:transform .15s ease;color:var(--ink-soft);display:flex;}
+  .seasonchevron.open{transform:rotate(90deg);}
+  .eprow{display:flex;align-items:center;gap:12px;background:var(--card);border-radius:14px;padding:12px 12px;margin:6px 0;}
+  .eprow.future{opacity:.55;}
+  .epinfo{flex:1;min-width:0;}
+  .epnum{font-size:11px;font-weight:800;color:var(--ink-soft);}
+  .eptitle{font-size:14.5px;font-weight:700;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .epdate{font-size:12px;color:var(--ink-soft);margin-top:2px;}
+  .epcheck{width:32px;height:32px;min-width:32px;border-radius:50%;background:var(--bg);border:none;
+    display:flex;align-items:center;justify-content:center;color:#B9BCC6;}
+  .epcheck.done{background:#EAF9F1;color:var(--ok);}
+
+  .metarow{display:flex;flex-wrap:wrap;gap:7px;margin:12px 6px 4px;}
+  .metachip{padding:5px 11px;border-radius:999px;font-size:11.5px;font-weight:700;background:#EEEFF3;color:var(--ink-soft);}
+  .metachip.running{background:#E7F9EF;color:#1E9A57;}
+  .metachip.ended{background:#F1F1F4;color:#6b6f7a;}
+  .metachip.rating{background:#FFF6E0;color:#946E00;}
+
+  .synopsis{font-size:13.5px;color:#3a3d46;line-height:1.55;margin:2px 6px 18px;}
+  .epsummary{font-size:12.5px;color:#6b6f7a;line-height:1.45;margin-top:4px;}
+  .epsummarytoggle{display:inline-flex;align-items:center;gap:3px;background:none;border:none;padding:0;
+    margin-left:2px;color:var(--ink);font-weight:700;font-size:12px;cursor:pointer;}
+  .epsummarytoggle svg{transition:transform .15s ease;}
+  .epsummarytoggle.open svg{transform:rotate(90deg);}
+
+  /* ---------- Profil ---------- */
+  .pcard{background:var(--card);border-radius:16px;padding:16px;margin:10px 0;}
+  .pcard label{font-size:12px;font-weight:800;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.03em;}
+  .pcard input[type=text]{width:100%;margin-top:8px;padding:12px 14px;border-radius:12px;border:1px solid var(--line);
+    font-size:14px;font-family:inherit;background:var(--bg);color:var(--ink);}
+  .pcard .hint{font-size:12px;color:var(--ink-soft);margin-top:8px;line-height:1.5;}
+  .pcard .hint a{color:var(--ink);font-weight:700;}
+  .btn{display:inline-flex;align-items:center;justify-content:center;padding:12px 18px;border-radius:12px;
+    font-weight:800;font-size:13.5px;border:none;margin-top:12px;}
+  .btn-dark{background:var(--ink);color:#fff;}
+  .btn-danger{background:#FCEAE7;color:var(--danger);width:100%;}
+  .statgrid{display:flex;gap:10px;}
+  .stat{flex:1;background:var(--card);border-radius:16px;padding:16px 10px;text-align:center;}
+  .stat .n{font-size:24px;font-weight:800;}
+  .stat .l{font-size:11px;color:var(--ink-soft);font-weight:700;margin-top:2px;text-transform:uppercase;}
+
+  /* ---------- Bottom nav ---------- */
+  .bottomnav{position:fixed;left:0;right:0;bottom:0;max-width:520px;margin:0 auto;background:var(--card);
+    border-top:1px solid var(--line);display:flex;padding-bottom:var(--safe-bottom);z-index:20;}
+  .navbtn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 0 8px;color:var(--ink-soft);}
+  .navbtn.active{color:var(--ink);}
+  .navbtn span{font-size:10.5px;font-weight:700;}
+  .toast{position:fixed;left:50%;bottom:calc(90px + var(--safe-bottom));transform:translateX(-50%);
+    background:var(--ink);color:#fff;padding:10px 18px;border-radius:999px;font-size:13px;font-weight:700;
+    opacity:0;pointer-events:none;transition:opacity .25s ease, transform .25s ease;z-index:50;white-space:nowrap;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px);}
+  .loading{text-align:center;color:var(--ink-soft);font-size:13px;padding:24px;}
+  ::-webkit-scrollbar{display:none;}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ===================== ÉTAT / STOCKAGE ===================== */
+const STORAGE_KEY = 'monsuivi_data_v1';
+function defaultState(){ return { shows:{}, movies:{}, settings:{tmdbKey:''} }; }
+let state = loadState();
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw){ const parsed = JSON.parse(raw); return Object.assign(defaultState(), parsed); }
+  }catch(e){ console.warn('Lecture stockage impossible', e); }
+  return defaultState();
+}
+function saveState(){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+  catch(e){ console.warn('Sauvegarde impossible', e); }
+}
+
+let nav = { screen:'series', seriesTab:'mes', filmsTab:'avoir', decouvrirTab:'series', mesFilter:'toutes' };
+
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+function fmtDate(d){
+  if(!d) return '';
+  const dt = new Date(d+'T00:00:00');
+  return dt.toLocaleDateString('fr-FR', {day:'numeric', month:'short'});
+}
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(showToast._to);
+  showToast._to = setTimeout(()=>t.classList.remove('show'), 1800);
+}
+
+/* ===================== API : TVMAZE (SÉRIES) ===================== */
+async function tvmazeSearch(q){
+  const res = await fetch('https://api.tvmaze.com/search/shows?q=' + encodeURIComponent(q));
+  if(!res.ok) throw new Error('TVMaze indisponible');
+  return res.json();
+}
+async function tvmazeEpisodes(showId){
+  const res = await fetch('https://api.tvmaze.com/shows/' + showId + '/episodes');
+  if(!res.ok) throw new Error('Impossible de charger les épisodes');
+  return res.json();
+}
+
+function sortedAiredEpisodes(show){
+  return (show.episodes||[])
+    .filter(e => e.season > 0 && e.number != null)
+    .sort((a,b)=> (a.airdate||'9999').localeCompare(b.airdate||'9999') || a.season-b.season || a.number-b.number);
+}
+function nextEpisodeToWatch(show){
+  const eps = sortedAiredEpisodes(show).filter(e => e.airdate && e.airdate <= todayStr());
+  const unwatched = eps.filter(e => !show.watched.includes(e.id));
+  return { current: unwatched[0] || null, backlog: Math.max(0, unwatched.length - 1) };
+}
+function nextEpisodeUpcoming(show){
+  const eps = sortedAiredEpisodes(show).filter(e => !e.airdate || e.airdate > todayStr());
+  return eps[0] || null;
+}
+function stripHtml(html){
+  if(!html) return '';
+  return html.replace(/<[^>]+>/g,' ').replace(/&nbsp;/g,' ').replace(/\s+/g,' ').trim();
+}
+async function addShow(showObj){
+  if(state.shows[showObj.id]) { showToast('Déjà dans ta liste'); return; }
+  try{
+    const episodes = await tvmazeEpisodes(showObj.id);
+    state.shows[showObj.id] = {
+      id: showObj.id,
+      name: showObj.name,
+      image: showObj.image ? (showObj.image.medium || showObj.image.original) : null,
+      summary: showObj.summary || '',
+      status: showObj.status || '',
+      premiered: showObj.premiered || '',
+      ended: showObj.ended || '',
+      genres: showObj.genres || [],
+      rating: (showObj.rating && showObj.rating.average) ? showObj.rating.average : null,
+      network: (showObj.network && showObj.network.name) || (showObj.webChannel && showObj.webChannel.name) || '',
+      episodes: episodes,
+      watched: [],
+      addedAt: Date.now()
+    };
+    saveState();
+    showToast(showObj.name + ' ajoutée ✓');
+  }catch(e){ showToast("Erreur lors de l'ajout"); }
+}
+async function ensureShowSummary(showId){
+  const show = state.shows[showId]; if(!show) return;
+  if(show.status !== undefined) return;
+  try{
+    const res = await fetch('https://api.tvmaze.com/shows/' + showId);
+    if(!res.ok) return;
+    const data = await res.json();
+    show.summary = data.summary || '';
+    show.status = data.status || '';
+    show.premiered = data.premiered || '';
+    show.ended = data.ended || '';
+    show.genres = data.genres || [];
+    show.rating = (data.rating && data.rating.average) ? data.rating.average : null;
+    show.network = (data.network && data.network.name) || (data.webChannel && data.webChannel.name) || '';
+    saveState();
+    if(nav.screen === 'showdetail' && nav.detailShowId === showId) render();
+  }catch(e){ /* silencieux */ }
+}
+function removeShow(id){ delete state.shows[id]; saveState(); render(); }
+function markWatched(showId){
+  const show = state.shows[showId]; if(!show) return;
+  const { current } = nextEpisodeToWatch(show);
+  if(current){ show.watched.push(current.id); saveState(); render(); }
+}
+function toggleEpisodeWatched(showId, episodeId){
+  const show = state.shows[showId]; if(!show) return;
+  const idx = show.watched.indexOf(episodeId);
+  if(idx !== -1){
+    show.watched.splice(idx,1);
+    saveState(); render();
+    return;
+  }
+  const aired = sortedAiredEpisodes(show).filter(e => e.airdate && e.airdate <= todayStr());
+  const pos = aired.findIndex(e => e.id === episodeId);
+  const previousUnwatched = pos > 0 ? aired.slice(0, pos).filter(e => !show.watched.includes(e.id)) : [];
+  show.watched.push(episodeId);
+  saveState(); render();
+  if(previousUnwatched.length > 0){
+    const label = previousUnwatched.length === 1 ? '1 épisode précédent' : `${previousUnwatched.length} épisodes précédents`;
+    if(confirm(`Marquer aussi les ${label} comme vus ?`)){
+      previousUnwatched.forEach(e => show.watched.push(e.id));
+      saveState(); render();
+    }
+  }
+}
+
+/* ===================== API : TMDB (FILMS) ===================== */
+function tmdbKey(){ return (state.settings.tmdbKey||'').trim(); }
+async function tmdbSearchMovie(q){
+  const key = tmdbKey();
+  if(!key) throw new Error('NO_KEY');
+  const url = 'https://api.themoviedb.org/3/search/movie?api_key=' + encodeURIComponent(key) +
+    '&language=fr-FR&query=' + encodeURIComponent(q);
+  const res = await fetch(url);
+  if(!res.ok) throw new Error('TMDB indisponible');
+  return res.json();
+}
+function addMovie(m){
+  if(state.movies[m.id]){ showToast('Déjà dans ta liste'); return; }
+  state.movies[m.id] = {
+    id: m.id,
+    title: m.title,
+    poster: m.poster_path ? ('https://image.tmdb.org/t/p/w300' + m.poster_path) : null,
+    year: (m.release_date||'').slice(0,4),
+    watched:false,
+    addedAt: Date.now()
+  };
+  saveState();
+  showToast(m.title + ' ajouté ✓');
+}
+function removeMovie(id){ delete state.movies[id]; saveState(); render(); }
+function toggleMovieWatched(id){
+  const m = state.movies[id]; if(!m) return;
+  m.watched = !m.watched; saveState(); render();
+}
+
+/* ===================== ICONES ===================== */
+const ICON = {
+  chevron:'<svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  chevronleft:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M15 5l-7 7 7 7" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  check:'<svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M4 12.5l5 5L20 6.5" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  tv:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="12" rx="2" stroke="currentColor" stroke-width="2"/><path d="M8 21h8M12 17v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+  film:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="2"/><path d="M3 9h18M3 15h18M8 4v16M16 4v16" stroke="currentColor" stroke-width="1.6"/></svg>',
+  search:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+  user:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2"/><path d="M4 20c1.5-4 5-6 8-6s6.5 2 8 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+  searchsm:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2.2"/><path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>'
+};
+function esc(s){ return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* ===================== RENDU : SÉRIES ===================== */
+function renderSeriesScreen(){
+  const shows = Object.values(state.shows);
+  const tab = nav.seriesTab;
+  let cards = '';
+
+  if(tab === 'mes'){
+    if(shows.length === 0){
+      cards = `<div class="empty"><b>Aucune série suivie</b>Ajoute des séries depuis l'onglet Découvrir pour commencer ton suivi.</div>`;
+    }else{
+      const withProgress = shows.map(s => {
+        const aired = sortedAiredEpisodes(s).filter(e => e.airdate && e.airdate <= todayStr());
+        const total = aired.length;
+        const watched = aired.filter(e => s.watched.includes(e.id)).length;
+        const finished = total > 0 && watched >= total;
+        const status = finished ? 'terminees' : (watched === 0 ? 'nonvues' : 'encours');
+        return { show:s, finished, status };
+      });
+      const filter = nav.mesFilter || 'toutes';
+      let filtered = filter === 'toutes' ? withProgress : withProgress.filter(r => r.status === filter);
+      filtered.sort((a,b)=> (a.finished === b.finished ? a.show.name.localeCompare(b.show.name) : (a.finished ? 1 : -1)));
+      if(filtered.length === 0){
+        const msgMap = { toutes:'Aucune série suivie', encours:'Aucune série en cours', terminees:'Aucune série terminée', nonvues:'Aucune série pas encore commencée' };
+        cards = `<div class="empty"><b>${msgMap[filter]}</b>Ajoute des séries depuis l'onglet Découvrir pour commencer ton suivi.</div>`;
+      }else{
+        cards = filtered.map(r => showSummaryCard(r.show)).join('');
+      }
+    }
+  } else if(tab === 'avoir'){
+    const rows = shows.map(s => ({show:s, ...nextEpisodeToWatch(s)})).filter(r => r.current);
+    rows.sort((a,b)=> a.current.airdate.localeCompare(b.current.airdate));
+    if(rows.length === 0){
+      cards = `<div class="empty"><b>Rien à voir pour l'instant</b>Ajoute des séries depuis l'onglet Découvrir pour commencer ton suivi.</div>`;
+    }else{
+      cards = rows.map(r => episodeCard(r.show, r.current, r.backlog, false)).join('');
+    }
+  } else {
+    const rows = shows.map(s => ({show:s, ep: nextEpisodeUpcoming(s)})).filter(r => r.ep);
+    rows.sort((a,b)=> (a.ep.airdate||'9999').localeCompare(b.ep.airdate||'9999'));
+    if(rows.length === 0){
+      cards = `<div class="empty"><b>Aucun épisode à venir</b>Les prochaines diffusions de tes séries suivies apparaîtront ici.</div>`;
+    }else{
+      cards = rows.map(r => episodeCard(r.show, r.ep, 0, true)).join('');
+    }
+  }
+
+  const filterDropdown = tab !== 'mes' ? '' : `
+    <div class="filterrow">
+      <select class="filterselect" id="mesfilter">
+        <option value="toutes" ${nav.mesFilter==='toutes'?'selected':''}>Toutes les séries</option>
+        <option value="encours" ${nav.mesFilter==='encours'?'selected':''}>En cours</option>
+        <option value="terminees" ${nav.mesFilter==='terminees'?'selected':''}>Terminées</option>
+        <option value="nonvues" ${nav.mesFilter==='nonvues'?'selected':''}>Pas encore vues</option>
+      </select>
+      <span class="filterchevron">${ICON.chevron}</span>
+    </div>`;
+
+  return `
+    <div class="toptabs">
+      <div class="toptab ${tab==='mes'?'active':''}" data-act="stab" data-val="mes">Mes séries</div>
+      <div class="toptab ${tab==='avoir'?'active':''}" data-act="stab" data-val="avoir">À voir</div>
+      <div class="toptab ${tab==='avenir'?'active':''}" data-act="stab" data-val="avenir">À venir</div>
+    </div>
+    <div class="content">${filterDropdown}${cards}</div>
+  `;
+}
+function showSummaryCard(show){
+  const poster = show.image ? `style="background-image:url('${esc(show.image)}')"` : '';
+  const aired = sortedAiredEpisodes(show).filter(e => e.airdate && e.airdate <= todayStr());
+  const total = aired.length;
+  const watched = aired.filter(e => show.watched.includes(e.id)).length;
+  const finished = total > 0 && watched >= total;
+  const pct = total > 0 ? Math.round((watched/total)*100) : 0;
+  return `
+    <div class="card" data-act="openshow" data-id="${show.id}">
+      <div class="poster" ${poster}></div>
+      <div class="cardbody">
+        <div class="se" style="font-size:16px;">${esc(show.name)}</div>
+        <div class="date-sub">${watched} / ${total} épisodes vus${finished ? ' · À jour ✓' : ''}</div>
+        <div class="progress-track"><div class="progress-fill ${finished?'finished':''}" style="width:${pct}%;"></div></div>
+      </div>
+      <div class="check"></div>
+    </div>
+  `;
+}
+function episodeCard(show, ep, backlog, upcoming){
+  const poster = show.image ? `style="background-image:url('${esc(show.image)}')"` : '';
+  const isPremiere = ep.number === 1;
+  const seLabel = `S${String(ep.season).padStart(2,'0')} | E${String(ep.number).padStart(2,'0')}`;
+  return `
+    <div class="card" data-act="openshow" data-id="${show.id}">
+      <div class="poster" ${poster}></div>
+      <div class="cardbody">
+        <div class="badge-row">
+          <div class="badge">${esc(show.name)} ${ICON.chevron}</div>
+        </div>
+        <div class="se">${seLabel}${backlog>0?`<span class="plus">+${backlog}</span>`:''}${isPremiere?'<span class="tag">Premiere</span>':''}</div>
+        <div class="title">${esc(ep.name || 'Sans titre')}</div>
+        ${upcoming ? `<div class="date-sub">${ep.airdate ? fmtDate(ep.airdate) : 'Date à confirmer'}</div>` : ''}
+      </div>
+      <div class="check">
+        ${upcoming ? '' : `<button class="checkbtn" data-act="watch" data-id="${show.id}">${ICON.check}</button>`}
+      </div>
+      <button class="removeX" data-act="rmshow" data-id="${show.id}">✕</button>
+    </div>
+  `;
+}
+
+/* ===================== RENDU : FILMS ===================== */
+function renderFilmsScreen(){
+  const movies = Object.values(state.movies);
+  const tab = nav.filmsTab;
+  const filtered = movies.filter(m => tab==='avoir' ? !m.watched : m.watched)
+    .sort((a,b)=> b.addedAt - a.addedAt);
+  let cards;
+  if(filtered.length===0){
+    cards = tab==='avoir'
+      ? `<div class="empty"><b>Aucun film à voir</b>Ajoute des films depuis l'onglet Découvrir.</div>`
+      : `<div class="empty"><b>Aucun film vu</b>Coche un film "à voir" pour le retrouver ici.</div>`;
+  }else{
+    cards = filtered.map(m => movieCard(m)).join('');
+  }
+  return `
+    <div class="toptabs">
+      <div class="toptab ${tab==='avoir'?'active':''}" data-act="ftab" data-val="avoir">À voir</div>
+      <div class="toptab ${tab==='vus'?'active':''}" data-act="ftab" data-val="vus">Vus</div>
+    </div>
+    <div class="content">${cards}</div>
+  `;
+}
+function movieCard(m){
+  const poster = m.poster ? `style="background-image:url('${esc(m.poster)}')"` : '';
+  return `
+    <div class="card">
+      <div class="poster" ${poster}></div>
+      <div class="cardbody">
+        <div class="badge-row"><div class="badge">Film ${ICON.chevron}</div></div>
+        <div class="se" style="font-size:16px;">${esc(m.title)}</div>
+        <div class="title">${esc(m.year||'')}</div>
+      </div>
+      <div class="check">
+        <button class="checkbtn ${m.watched?'done':''}" data-act="moviewatch" data-id="${m.id}">${ICON.check}</button>
+      </div>
+      <button class="removeX" data-act="rmmovie" data-id="${m.id}">✕</button>
+    </div>
+  `;
+}
+
+/* ===================== RENDU : DÉCOUVRIR ===================== */
+let discoverResults = [];
+let discoverLoading = false;
+let expandedEpisodes = new Set();
+let seasonOverrides = new Set();
+function defaultExpandedSeason(show){
+  const { current } = nextEpisodeToWatch(show);
+  if(current) return current.season;
+  const eps = sortedAiredEpisodes(show);
+  if(eps.length) return eps[eps.length-1].season;
+  return null;
+}
+function isSeasonExpanded(showId, season, defaultExpanded){
+  const key = showId + '-' + season;
+  return seasonOverrides.has(key) ? !defaultExpanded : defaultExpanded;
+}
+async function runDiscoverSearch(q){
+  if(!q || q.trim().length < 2){ discoverResults = []; render(); return; }
+  discoverLoading = true; render();
+  try{
+    if(nav.decouvrirTab === 'series'){
+      const data = await tvmazeSearch(q);
+      discoverResults = data.map(d => d.show);
+    }else{
+      if(!tmdbKey()){ discoverLoading=false; render(); showToast('Ajoute ta clé TMDB dans Profil'); return; }
+      const data = await tmdbSearchMovie(q);
+      discoverResults = data.results || [];
+    }
+  }catch(e){
+    showToast('Recherche impossible');
+    discoverResults = [];
+  }
+  discoverLoading = false;
+  render();
+}
+function renderDecouvrirScreen(){
+  const isSeries = nav.decouvrirTab === 'series';
+  let results;
+  if(discoverLoading){
+    results = `<div class="loading">Recherche en cours…</div>`;
+  } else if(discoverResults.length === 0){
+    results = `<div class="empty"><b>Trouve une série ou un film</b>Tape au moins 2 lettres pour lancer la recherche.</div>`;
+  } else if(isSeries){
+    results = discoverResults.map(s => {
+      const added = !!state.shows[s.id];
+      const img = s.image ? s.image.medium : null;
+      return `
+        <div class="resrow">
+          <div class="resimg" style="${img?`background-image:url('${esc(img)}')`:''}"></div>
+          <div class="resinfo">
+            <div class="name">${esc(s.name)}</div>
+            <div class="meta">${s.premiered ? s.premiered.slice(0,4) : ''} ${s.network?('· '+esc(s.network.name)):''}</div>
+          </div>
+          <button class="addbtn ${added?'added':''}" data-act="addshow" data-id="${s.id}">${added?ICON.check:'+'}</button>
+        </div>`;
+    }).join('');
+  } else {
+    results = discoverResults.map(m => {
+      const added = !!state.movies[m.id];
+      return `
+        <div class="resrow">
+          <div class="resimg" style="${m.poster_path?`background-image:url('https://image.tmdb.org/t/p/w200${m.poster_path}')`:''}"></div>
+          <div class="resinfo">
+            <div class="name">${esc(m.title)}</div>
+            <div class="meta">${(m.release_date||'').slice(0,4)}</div>
+          </div>
+          <button class="addbtn ${added?'added':''}" data-act="addmovie" data-id="${m.id}">${added?ICON.check:'+'}</button>
+        </div>`;
+    }).join('');
+  }
+  return `
+    <div class="segrow">
+      <div class="seg ${isSeries?'active':''}" data-act="dtab" data-val="series">Séries</div>
+      <div class="seg ${!isSeries?'active':''}" data-act="dtab" data-val="films">Films</div>
+    </div>
+    <div class="searchwrap">
+      <div class="searchbar">
+        ${ICON.searchsm}
+        <input id="searchinput" type="search" placeholder="${isSeries?'Chercher une série…':'Chercher un film…'}" value="${esc(window.__searchVal||'')}" autocomplete="off">
+      </div>
+    </div>
+    <div class="content">${results}</div>
+  `;
+}
+
+/* ===================== RENDU : DÉTAIL SÉRIE ===================== */
+function renderShowDetailScreen(){
+  const show = state.shows[nav.detailShowId];
+  if(!show){ nav.screen = 'series'; return renderSeriesScreen(); }
+  ensureShowSummary(show.id);
+  const eps = sortedAiredEpisodes(show);
+  const bySeason = {};
+  eps.forEach(e => { (bySeason[e.season] = bySeason[e.season] || []).push(e); });
+  const seasons = Object.keys(bySeason).sort((a,b)=>Number(a)-Number(b));
+  const watchedCount = show.watched.length;
+  const totalCount = eps.length;
+
+  const defaultSeason = defaultExpandedSeason(show);
+  const seasonsHtml = seasons.map(sNum => {
+    const seasonEps = bySeason[sNum];
+    const watchedInSeason = seasonEps.filter(e => show.watched.includes(e.id)).length;
+    const defaultExpanded = Number(sNum) === defaultSeason;
+    const expanded = isSeasonExpanded(show.id, sNum, defaultExpanded);
+    const rows = !expanded ? '' : seasonEps.map(ep => {
+      const isFuture = ep.airdate && ep.airdate > todayStr();
+      const done = show.watched.includes(ep.id);
+      return `
+        <div class="eprow ${isFuture?'future':''}">
+          <div class="epinfo">
+            <div class="epnum">E${String(ep.number).padStart(2,'0')}</div>
+            <div class="eptitle">${esc(ep.name || 'Sans titre')}</div>
+            <div class="epdate">${ep.airdate ? fmtDate(ep.airdate) : 'Date à confirmer'}</div>
+            ${episodeSummaryHtml(ep)}
+          </div>
+          ${isFuture ? '' : `<button class="epcheck ${done?'done':''}" data-act="toggleep" data-showid="${show.id}" data-epid="${ep.id}">${ICON.check}</button>`}
+        </div>`;
+    }).join('');
+    return `
+      <div class="seasonhead" data-act="toggleseason" data-showid="${show.id}" data-season="${sNum}">
+        <span class="seasonlabel">Saison ${sNum}</span>
+        <span class="seasoncount">${watchedInSeason}/${seasonEps.length} vus <span class="seasonchevron ${expanded?'open':''}">${ICON.chevron}</span></span>
+      </div>
+      ${rows}`;
+  }).join('');
+
+  const showSynopsis = stripHtml(show.summary);
+  const metaHtml = showMetaHtml(show);
+  const poster = show.image ? `style="background-image:url('${esc(show.image)}')"` : '';
+  return `
+    <div class="detailhero" ${poster}>
+      <div class="backrow"><button class="backbtn" data-act="backtoseries">${ICON.chevronleft}</button></div>
+      <div class="herotitle">${esc(show.name)}</div>
+    </div>
+    <div class="content" style="padding-top:14px;">
+      ${metaHtml}
+      ${showSynopsis ? `<div class="synopsis">${esc(showSynopsis)}</div>` : ''}
+      <div class="date-sub" style="margin:0 6px 4px;">${watchedCount} / ${totalCount} épisodes vus</div>
+      ${seasonsHtml || '<div class="empty">Aucun épisode disponible.</div>'}
+      <button class="btn btn-danger" data-act="rmshow" data-id="${show.id}" style="margin-top:24px;">Retirer cette série de mon suivi</button>
+    </div>
+  `;
+}
+function showMetaHtml(show){
+  const chips = [];
+  if(show.status === 'Ended'){
+    const range = show.premiered ? `${show.premiered.slice(0,4)}–${show.ended ? show.ended.slice(0,4) : '?'}` : 'Terminée';
+    chips.push(`<span class="metachip ended">${esc(range)} · Terminée</span>`);
+  } else if(show.status === 'Running'){
+    const from = show.premiered ? `Depuis ${show.premiered.slice(0,4)} · ` : '';
+    chips.push(`<span class="metachip running">${esc(from)}En cours</span>`);
+  } else if(show.status){
+    chips.push(`<span class="metachip">${esc(show.status)}</span>`);
+  }
+  if(show.rating){ chips.push(`<span class="metachip rating">★ ${esc(String(show.rating))}</span>`); }
+  if(show.network){ chips.push(`<span class="metachip">${esc(show.network)}</span>`); }
+  (show.genres||[]).forEach(g => chips.push(`<span class="metachip">${esc(g)}</span>`));
+  if(chips.length === 0) return '';
+  return `<div class="metarow">${chips.join('')}</div>`;
+}
+function episodeSummaryHtml(ep){
+  const text = stripHtml(ep.summary);
+  if(!text) return '';
+  const isOpen = expandedEpisodes.has(ep.id);
+  const LIMIT = 90;
+  const needsToggle = text.length > LIMIT;
+  const shown = isOpen || !needsToggle ? text : text.slice(0, LIMIT).trim() + '…';
+  return `<div class="epsummary">${esc(shown)}${needsToggle ? ` <button class="epsummarytoggle ${isOpen?'open':''}" data-act="toggleepsum" data-epid="${ep.id}">${isOpen?'Réduire':'Lire plus'} ${ICON.chevron}</button>` : ''}</div>`;
+}
+
+function computeTotalWatchMinutes(){
+  let total = 0;
+  Object.values(state.shows).forEach(show => {
+    (show.episodes||[]).forEach(ep => {
+      if(show.watched.includes(ep.id)) total += (ep.runtime || 0);
+    });
+  });
+  return total;
+}
+function formatDuration(totalMinutes){
+  if(!totalMinutes || totalMinutes <= 0) return '0 min';
+  const days = Math.floor(totalMinutes / (60*24));
+  const hours = Math.floor((totalMinutes % (60*24)) / 60);
+  const mins = Math.round(totalMinutes % 60);
+  const parts = [];
+  if(days > 0) parts.push(`${days} j`);
+  if(days > 0 || hours > 0) parts.push(`${hours} h`);
+  parts.push(`${mins} min`);
+  return parts.join(' ');
+}
+
+/* ===================== RENDU : PROFIL ===================== */
+function renderProfilScreen(){
+  const nbShows = Object.keys(state.shows).length;
+  const nbEpWatched = Object.values(state.shows).reduce((a,s)=>a+s.watched.length,0);
+  const nbMoviesWatched = Object.values(state.movies).filter(m=>m.watched).length;
+  const totalMinutes = computeTotalWatchMinutes();
+  return `
+    <div class="content" style="padding-top:20px;">
+      <div class="statgrid">
+        <div class="stat"><div class="n">${nbShows}</div><div class="l">Séries suivies</div></div>
+        <div class="stat"><div class="n">${nbEpWatched}</div><div class="l">Épisodes vus</div></div>
+        <div class="stat"><div class="n">${nbMoviesWatched}</div><div class="l">Films vus</div></div>
+      </div>
+      <div class="pcard">
+        <label>Temps passé à regarder tes séries</label>
+        <div style="font-size:26px;font-weight:800;margin-top:8px;">${formatDuration(totalMinutes)}</div>
+        <div class="hint">Calculé à partir de la durée réelle de chaque épisode que tu as coché comme vu.</div>
+      </div>
+      <div class="pcard">
+        <label>Clé API TMDB</label>
+        <input type="text" id="tmdbkeyinput" placeholder="Colle ta clé API v3 ici" value="${esc(state.settings.tmdbKey)}">
+        <div class="hint">Nécessaire pour chercher des films. Crée une clé gratuite sur
+          <a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noopener">themoviedb.org/settings/api</a>,
+          puis colle la "Clé API (v3 auth)" ci-dessus.</div>
+        <button class="btn btn-dark" data-act="savekey">Enregistrer</button>
+      </div>
+      <div class="pcard">
+        <label>Données</label>
+        <div class="hint">Tes séries, films et épisodes vus sont stockés uniquement sur cet appareil (aucun compte, aucun serveur).</div>
+        <button class="btn btn-danger" data-act="reset">Réinitialiser mes données</button>
+      </div>
+    </div>
+  `;
+}
+
+/* ===================== RENDU GLOBAL ===================== */
+function render(){
+  let body = '';
+  if(nav.screen === 'series') body = renderSeriesScreen();
+  else if(nav.screen === 'showdetail') body = renderShowDetailScreen();
+  else if(nav.screen === 'films') body = renderFilmsScreen();
+  else if(nav.screen === 'decouvrir') body = renderDecouvrirScreen();
+  else body = renderProfilScreen();
+
+  const showNav = nav.screen !== 'showdetail';
+  document.getElementById('app').innerHTML = `
+    ${body}
+    ${showNav ? `
+    <div class="bottomnav">
+      <div class="navbtn ${nav.screen==='series'?'active':''}" data-act="nav" data-val="series">${ICON.tv}<span>Séries</span></div>
+      <div class="navbtn ${nav.screen==='films'?'active':''}" data-act="nav" data-val="films">${ICON.film}<span>Films</span></div>
+      <div class="navbtn ${nav.screen==='decouvrir'?'active':''}" data-act="nav" data-val="decouvrir">${ICON.search}<span>Découvrir</span></div>
+      <div class="navbtn ${nav.screen==='profil'?'active':''}" data-act="nav" data-val="profil">${ICON.user}<span>Profil</span></div>
+    </div>` : ''}
+  `;
+
+  if(nav.screen === 'decouvrir'){
+    const input = document.getElementById('searchinput');
+    if(input){
+      input.focus({preventScroll:true});
+      const len = input.value.length; input.setSelectionRange(len,len);
+      input.oninput = (e)=>{
+        window.__searchVal = e.target.value;
+        clearTimeout(render._deb);
+        render._deb = setTimeout(()=> runDiscoverSearch(e.target.value), 350);
+      };
+    }
+  }
+  if(nav.screen === 'series' && nav.seriesTab === 'mes'){
+    const filterSel = document.getElementById('mesfilter');
+    if(filterSel){
+      filterSel.onchange = (e)=>{ nav.mesFilter = e.target.value; render(); };
+    }
+  }
+}
+
+/* ===================== ÉVÉNEMENTS ===================== */
+document.addEventListener('click', (e)=>{
+  const el = e.target.closest('[data-act]');
+  if(!el) return;
+  const act = el.dataset.act, val = el.dataset.val, id = el.dataset.id;
+  if(act === 'nav'){ nav.screen = val; if(val==='decouvrir'){ discoverResults=[]; window.__searchVal=''; } render(); }
+  else if(act === 'stab'){ nav.seriesTab = val; render(); }
+  else if(act === 'ftab'){ nav.filmsTab = val; render(); }
+  else if(act === 'dtab'){ nav.decouvrirTab = val; discoverResults=[]; window.__searchVal=''; render(); }
+  else if(act === 'watch'){ e.stopPropagation(); markWatched(id); }
+  else if(act === 'openshow'){ nav.screen = 'showdetail'; nav.detailShowId = Number(id); render(); }
+  else if(act === 'backtoseries'){ nav.screen = 'series'; render(); }
+  else if(act === 'toggleep'){ toggleEpisodeWatched(Number(el.dataset.showid), Number(el.dataset.epid)); }
+  else if(act === 'toggleseason'){
+    seasonOverrides.has(el.dataset.showid+'-'+el.dataset.season) ? seasonOverrides.delete(el.dataset.showid+'-'+el.dataset.season) : seasonOverrides.add(el.dataset.showid+'-'+el.dataset.season);
+    render();
+  }
+  else if(act === 'toggleepsum'){
+    const epid = Number(el.dataset.epid);
+    if(expandedEpisodes.has(epid)) expandedEpisodes.delete(epid); else expandedEpisodes.add(epid);
+    render();
+  }
+  else if(act === 'rmshow'){ if(confirm('Retirer cette série de ton suivi ?')) removeShow(Number(id)); }
+  else if(act === 'rmmovie'){ if(confirm('Retirer ce film de ta liste ?')) removeMovie(Number(id)); }
+  else if(act === 'moviewatch'){ toggleMovieWatched(Number(id)); }
+  else if(act === 'addshow'){
+    const show = discoverResults.find(s=>String(s.id)===String(id));
+    if(show) addShow(show).then(render);
+  }
+  else if(act === 'addmovie'){
+    const m = discoverResults.find(s=>String(s.id)===String(id));
+    if(m) { addMovie(m); render(); }
+  }
+  else if(act === 'savekey'){
+    const v = document.getElementById('tmdbkeyinput').value.trim();
+    state.settings.tmdbKey = v; saveState(); showToast('Clé enregistrée ✓');
+  }
+  else if(act === 'reset'){
+    if(confirm('Cela supprime définitivement toutes tes séries, films et épisodes vus. Continuer ?')){
+      state = defaultState(); saveState(); render();
+    }
+  }
+});
+
+render();
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(()=>{ /* pas grave si indisponible (ex: file://) */ });
+  });
+}
+</script>
+</body>
+</html>
