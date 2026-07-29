@@ -192,6 +192,42 @@ function saveState(){
   try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
   catch(e){ console.warn('Sauvegarde impossible', e); }
 }
+function exportData(){
+  try{
+    const dataStr = JSON.stringify(state, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const dateTag = new Date().toISOString().slice(0,10);
+    a.href = url;
+    a.download = `monsuivi-sauvegarde-${dateTag}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('Export téléchargé ✓');
+  }catch(e){ showToast("Erreur lors de l'export"); }
+}
+function importDataFromFile(file){
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    let parsed;
+    try{ parsed = JSON.parse(e.target.result); }
+    catch(err){ showToast('Fichier invalide'); return; }
+    if(!parsed || typeof parsed !== 'object' || !parsed.shows || !parsed.movies){
+      showToast('Fichier invalide'); return;
+    }
+    if(confirm('Importer ce fichier remplacera toutes tes données actuelles sur cet appareil. Continuer ?')){
+      state = Object.assign(defaultState(), parsed);
+      saveState();
+      render();
+      showToast('Données importées ✓');
+    }
+  };
+  reader.onerror = () => showToast('Lecture du fichier impossible');
+  reader.readAsText(file);
+}
 
 let nav = { screen:'series', seriesTab:'mes', filmsTab:'avoir', decouvrirTab:'series', mesFilter:'toutes' };
 
@@ -715,8 +751,15 @@ function renderProfilScreen(){
         <button class="btn btn-dark" data-act="savekey">Enregistrer</button>
       </div>
       <div class="pcard">
-        <label>Données</label>
-        <div class="hint">Tes séries, films et épisodes vus sont stockés uniquement sur cet appareil (aucun compte, aucun serveur).</div>
+        <label>Transférer mes données</label>
+        <div class="hint">Tes données restent uniquement sur cet appareil (aucun compte, aucun serveur). Pour les retrouver sur un autre appareil (ex : ton iPhone), exporte-les ici puis importe le fichier là-bas.</div>
+        <button class="btn btn-dark" data-act="exportdata">Exporter mes données</button>
+        <button class="btn btn-dark" data-act="importdata" style="margin-left:8px;background:var(--card);color:var(--ink);border:1.4px solid var(--ink);">Importer des données</button>
+        <input type="file" id="importFileInput" accept="application/json" style="display:none;">
+      </div>
+      <div class="pcard">
+        <label>Réinitialiser</label>
+        <div class="hint">Supprime définitivement toutes tes séries, films et épisodes vus sur cet appareil.</div>
         <button class="btn btn-danger" data-act="reset">Réinitialiser mes données</button>
       </div>
     </div>
@@ -762,6 +805,16 @@ function render(){
       filterSel.onchange = (e)=>{ nav.mesFilter = e.target.value; render(); };
     }
   }
+  if(nav.screen === 'profil'){
+    const importInput = document.getElementById('importFileInput');
+    if(importInput){
+      importInput.onchange = (e)=>{
+        const file = e.target.files && e.target.files[0];
+        importDataFromFile(file);
+        importInput.value = '';
+      };
+    }
+  }
 }
 
 /* ===================== ÉVÉNEMENTS ===================== */
@@ -801,6 +854,8 @@ document.addEventListener('click', (e)=>{
     const v = document.getElementById('tmdbkeyinput').value.trim();
     state.settings.tmdbKey = v; saveState(); showToast('Clé enregistrée ✓');
   }
+  else if(act === 'exportdata'){ exportData(); }
+  else if(act === 'importdata'){ document.getElementById('importFileInput').click(); }
   else if(act === 'reset'){
     if(confirm('Cela supprime définitivement toutes tes séries, films et épisodes vus. Continuer ?')){
       state = defaultState(); saveState(); render();
