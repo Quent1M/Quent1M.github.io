@@ -177,20 +177,64 @@
 <div class="toast" id="toast"></div>
 
 <script>
-/* ===================== ÉTAT / STOCKAGE ===================== */
-const STORAGE_KEY = 'monsuivi_data_v1';
+/* ===================== ÉTAT / STOCKAGE (IndexedDB) ===================== */
+const LEGACY_STORAGE_KEY = 'monsuivi_data_v1'; // ancien localStorage, gardé pour migration
+const IDB_NAME = 'monsuivi_db';
+const IDB_STORE = 'kv';
+const IDB_KEY = 'state';
+
 function defaultState(){ return { shows:{}, movies:{}, settings:{tmdbKey:''} }; }
-let state = loadState();
-function loadState(){
-  try{
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if(raw){ const parsed = JSON.parse(raw); return Object.assign(defaultState(), parsed); }
-  }catch(e){ console.warn('Lecture stockage impossible', e); }
-  return defaultState();
+let state = defaultState();
+
+function openIdb(){
+  return new Promise((resolve, reject)=>{
+    if(!('indexedDB' in window)) { reject(new Error('IndexedDB indisponible')); return; }
+    const req = indexedDB.open(IDB_NAME, 1);
+    req.onupgradeneeded = () => { req.result.createObjectStore(IDB_STORE); };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
 }
+async function idbGet(){
+  const db = await openIdb();
+  return new Promise((resolve, reject)=>{
+    const tx = db.transaction(IDB_STORE, 'readonly');
+    const req = tx.objectStore(IDB_STORE).get(IDB_KEY);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+async function idbSet(value){
+  const db = await openIdb();
+  return new Promise((resolve, reject)=>{
+    const tx = db.transaction(IDB_STORE, 'readwrite');
+    tx.objectStore(IDB_STORE).put(value, IDB_KEY);
+    tx.oncomplete = () => resolve(true);
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+async function initState(){
+  try{
+    const fromIdb = await idbGet();
+    if(fromIdb){ state = Object.assign(defaultState(), fromIdb); return; }
+  }catch(e){ console.warn('Lecture IndexedDB impossible', e); }
+
+  // Rien dans IndexedDB : on tente de migrer depuis l'ancien localStorage (si présent)
+  try{
+    const raw = localStorage.getItem(LEGACY_STORAGE_KEY);
+    if(raw){
+      state = Object.assign(defaultState(), JSON.parse(raw));
+      await idbSet(state).catch(()=>{});
+    }
+  }catch(e){ console.warn('Migration localStorage impossible', e); }
+}
+
 function saveState(){
-  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
-  catch(e){ console.warn('Sauvegarde impossible', e); }
+  idbSet(state).catch((e)=>{
+    console.warn('Sauvegarde IndexedDB impossible', e);
+    showToast('Erreur de sauvegarde');
+  });
 }
 function exportData(){
   try{
@@ -863,7 +907,11 @@ document.addEventListener('click', (e)=>{
   }
 });
 
-render();
+(async () => {
+  document.getElementById('app').innerHTML = '<div class="loading" style="padding-top:100px;">Chargement de tes données…</div>';
+  await initState();
+  render();
+})();
 
 if('serviceWorker' in navigator){
   window.addEventListener('load', () => {
