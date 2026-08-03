@@ -34,7 +34,9 @@
   #app{max-width:520px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;position:relative;}
 
   /* ---------- Top tabs (per-section) ---------- */
-  .toptabs{display:flex;padding:calc(14px + var(--safe-top)) 20px 0 20px;gap:28px;background:var(--bg);position:sticky;top:0;z-index:5;}
+  .toptabs{display:flex;padding:calc(14px + var(--safe-top)) 20px 0 20px;gap:22px;background:var(--bg);position:sticky;top:0;z-index:5;overflow-x:auto;scrollbar-width:none;}
+  .toptabs::-webkit-scrollbar{display:none;}
+  .toptab{flex:none;}
   .toptab{font-size:13px;font-weight:800;letter-spacing:.04em;color:var(--ink-soft);
     padding-bottom:12px;border-bottom:3px solid transparent;cursor:pointer;text-transform:uppercase;}
   .toptab.active{color:var(--ink);border-bottom-color:var(--accent);}
@@ -436,26 +438,40 @@ function renderSeriesScreen(){
   const tab = nav.seriesTab;
   let cards = '';
 
+  const withStatus = (list) => list.map(s => {
+    const aired = sortedAiredEpisodes(s).filter(e => e.airdate && e.airdate <= todayStr());
+    const total = aired.length;
+    const watched = aired.filter(e => s.watched.includes(e.id)).length;
+    const finished = total > 0 && watched >= total;
+    const status = finished ? 'terminees' : (watched === 0 ? 'nonvues' : 'encours');
+    return { show:s, finished, status };
+  });
+
   if(tab === 'mes'){
     if(shows.length === 0){
       cards = `<div class="empty"><b>Aucune série suivie</b>Ajoute des séries depuis l'onglet Découvrir pour commencer ton suivi.</div>`;
     }else{
-      const withProgress = shows.map(s => {
-        const aired = sortedAiredEpisodes(s).filter(e => e.airdate && e.airdate <= todayStr());
-        const total = aired.length;
-        const watched = aired.filter(e => s.watched.includes(e.id)).length;
-        const finished = total > 0 && watched >= total;
-        const status = finished ? 'terminees' : (watched === 0 ? 'nonvues' : 'encours');
-        return { show:s, finished, status };
-      });
+      const withProgress = withStatus(shows).filter(r => r.status !== 'nonvues');
       const filter = nav.mesFilter || 'toutes';
       let filtered = filter === 'toutes' ? withProgress : withProgress.filter(r => r.status === filter);
       filtered.sort((a,b)=> (a.finished === b.finished ? a.show.name.localeCompare(b.show.name) : (a.finished ? 1 : -1)));
       if(filtered.length === 0){
-        const msgMap = { toutes:'Aucune série suivie', encours:'Aucune série en cours', terminees:'Aucune série terminée', nonvues:'Aucune série pas encore commencée' };
-        cards = `<div class="empty"><b>${msgMap[filter]}</b>Ajoute des séries depuis l'onglet Découvrir pour commencer ton suivi.</div>`;
+        const msgMap = { toutes:'Aucune série en cours ou terminée', encours:'Aucune série en cours', terminees:'Aucune série terminée' };
+        cards = `<div class="empty"><b>${msgMap[filter] || msgMap.toutes}</b>Les séries que tu commences apparaîtront ici. Retrouve celles pas encore commencées dans l'onglet dédié.</div>`;
       }else{
         cards = filtered.map(r => showSummaryCard(r.show)).join('');
+      }
+    }
+  } else if(tab === 'nonvues'){
+    if(shows.length === 0){
+      cards = `<div class="empty"><b>Aucune série suivie</b>Ajoute des séries depuis l'onglet Découvrir pour commencer ton suivi.</div>`;
+    }else{
+      const notStarted = withStatus(shows).filter(r => r.status === 'nonvues');
+      notStarted.sort((a,b)=> a.show.name.localeCompare(b.show.name));
+      if(notStarted.length === 0){
+        cards = `<div class="empty"><b>Rien de pas commencé</b>Toutes tes séries suivies ont au moins un épisode vu.</div>`;
+      }else{
+        cards = notStarted.map(r => showSummaryCard(r.show)).join('');
       }
     }
   } else if(tab === 'avoir'){
@@ -479,10 +495,9 @@ function renderSeriesScreen(){
   const filterDropdown = tab !== 'mes' ? '' : `
     <div class="filterrow">
       <select class="filterselect" id="mesfilter">
-        <option value="toutes" ${nav.mesFilter==='toutes'?'selected':''}>Toutes les séries</option>
+        <option value="toutes" ${nav.mesFilter==='toutes'?'selected':''}>Toutes (en cours + terminées)</option>
         <option value="encours" ${nav.mesFilter==='encours'?'selected':''}>En cours</option>
         <option value="terminees" ${nav.mesFilter==='terminees'?'selected':''}>Terminées</option>
-        <option value="nonvues" ${nav.mesFilter==='nonvues'?'selected':''}>Pas encore vues</option>
       </select>
       <span class="filterchevron">${ICON.chevron}</span>
     </div>`;
@@ -492,6 +507,7 @@ function renderSeriesScreen(){
       <div class="toptab ${tab==='mes'?'active':''}" data-act="stab" data-val="mes">Mes séries</div>
       <div class="toptab ${tab==='avoir'?'active':''}" data-act="stab" data-val="avoir">À voir</div>
       <div class="toptab ${tab==='avenir'?'active':''}" data-act="stab" data-val="avenir">À venir</div>
+      <div class="toptab ${tab==='nonvues'?'active':''}" data-act="stab" data-val="nonvues">Pas commencées</div>
     </div>
     <div class="content">${filterDropdown}${cards}</div>
   `;
