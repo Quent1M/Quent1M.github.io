@@ -23,14 +23,58 @@
     --accent-ink:#8A5B00;
     --ok:#3DBE7A;
     --danger:#E1543D;
+    --poster-bg:#dcdde3;
+    --text-secondary:#3a3d46;
+    --text-tertiary:#6b6f7a;
+    --track-bg:#E7E8EE;
+    --chip-bg:#EEEFF3;
+    --chip-running-bg:#E7F9EF;
+    --chip-running-ink:#1E9A57;
+    --chip-ended-bg:#F1F1F4;
+    --chip-ended-ink:#6b6f7a;
+    --chip-rating-bg:#FFF6E0;
+    --chip-rating-ink:#946E00;
+    --danger-bg:#FCEAE7;
+    --ok-bg:#EAF9F1;
+    --checkbtn-ink:#B9BCC6;
+    --btn-primary-bg:#171A21;
+    --btn-primary-ink:#FFFFFF;
+    --finished-purple:#8B5CF6;
     --radius:18px;
     --safe-bottom: env(safe-area-inset-bottom, 0px);
     --safe-top: env(safe-area-inset-top, 0px);
+  }
+  html.dark{
+    --bg:#0E0F13;
+    --card:#1B1D24;
+    --ink:#F1F2F6;
+    --ink-soft:#9095A1;
+    --line:#2C2F38;
+    --ok:#46D98C;
+    --danger:#FF6B57;
+    --poster-bg:#2A2D35;
+    --text-secondary:#C7C9D1;
+    --text-tertiary:#9096A3;
+    --track-bg:#2A2D35;
+    --chip-bg:#262932;
+    --chip-running-bg:#14301F;
+    --chip-running-ink:#4ADE94;
+    --chip-ended-bg:#262932;
+    --chip-ended-ink:#9096A3;
+    --chip-rating-bg:#332705;
+    --chip-rating-ink:#FFC94A;
+    --danger-bg:#3A1E1A;
+    --ok-bg:#163326;
+    --checkbtn-ink:#5B606B;
+    --btn-primary-bg:#F1F2F6;
+    --btn-primary-ink:#171A21;
+    --finished-purple:#A78BFA;
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
   html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
     font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
     height:100%; overscroll-behavior-y:none;}
+  html{transition:background .2s ease;}
   #app{max-width:520px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;position:relative;}
 
   /* ---------- Top tabs (per-section) ---------- */
@@ -54,7 +98,7 @@
   /* ---------- Episode / show card ---------- */
   .card{display:flex;background:var(--card);border-radius:var(--radius);margin:10px 0;overflow:hidden;
     box-shadow:0 1px 2px rgba(20,20,30,.05), 0 6px 16px rgba(20,20,30,.04); position:relative;}
-  .poster{width:92px;min-width:92px;background:#dcdde3 center/cover no-repeat;}
+  .poster{width:92px;min-width:92px;background:var(--poster-bg) center/cover no-repeat;}
   .cardbody{flex:1;padding:12px 10px 12px 14px;display:flex;flex-direction:column;justify-content:center;gap:4px;min-width:0;}
   .badge-row{display:flex;align-items:center;gap:8px;}
   .badge{display:inline-flex;align-items:center;gap:4px;border:1.4px solid var(--ink);border-radius:999px;
@@ -65,13 +109,13 @@
   .plus{font-size:12px;font-weight:800;color:var(--ink-soft);margin-left:4px;}
   .tag{font-size:10px;font-weight:800;background:var(--accent);color:var(--accent-ink);border-radius:6px;
     padding:3px 7px;margin-left:6px;text-transform:uppercase;letter-spacing:.03em;}
-  .title{font-size:14.5px;color:#3a3d46;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .title{font-size:14.5px;color:var(--text-secondary);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .date-sub{font-size:12.5px;color:var(--ink-soft);margin-top:2px;font-weight:600;}
   .check{width:56px;min-width:56px;display:flex;align-items:center;justify-content:center;}
   .checkbtn{width:38px;height:38px;border-radius:50%;background:var(--bg);border:none;
-    display:flex;align-items:center;justify-content:center;color:#B9BCC6;transition:transform .12s ease;}
+    display:flex;align-items:center;justify-content:center;color:var(--checkbtn-ink);transition:transform .12s ease;}
   .checkbtn:active{transform:scale(.88);}
-  .checkbtn.done{background:#EAF9F1;color:var(--ok);}
+  .checkbtn.done{background:var(--ok-bg);color:var(--ok);}
   .removeX{position:absolute;top:6px;right:6px;width:22px;height:22px;border-radius:50%;background:rgba(20,20,30,.55);
     color:#fff;border:none;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;}
 
@@ -80,11 +124,11 @@
   .searchbar{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);
     border-radius:14px;padding:10px 14px;}
   .searchbar input{border:none;outline:none;background:transparent;font-size:15px;flex:1;color:var(--ink);font-family:inherit;}
-  .segrow{display:flex;background:#E7E8EE;border-radius:12px;padding:4px;margin:12px 20px 0;gap:4px;}
+  .segrow{display:flex;background:var(--track-bg);border-radius:12px;padding:4px;margin:12px 20px 0;gap:4px;}
   .seg{flex:1;text-align:center;padding:9px 0;border-radius:9px;font-size:13px;font-weight:800;color:var(--ink-soft);}
   .seg.active{background:var(--card);color:var(--ink);}
   .resrow{display:flex;align-items:center;gap:12px;background:var(--card);border-radius:16px;padding:10px;margin:10px 0;}
-  .resimg{width:52px;height:74px;border-radius:8px;background:#dcdde3 center/cover no-repeat;flex:none;}
+  .resimg{width:52px;height:74px;border-radius:8px;background:var(--poster-bg) center/cover no-repeat;flex:none;}
   .resinfo{flex:1;min-width:0;}
   .resinfo .name{font-weight:800;font-size:14.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .resinfo .meta{font-size:12px;color:var(--ink-soft);margin-top:2px;}
@@ -92,9 +136,9 @@
     display:flex;align-items:center;justify-content:center;color:var(--ink);flex:none;font-size:18px;font-weight:700;}
   .addbtn.added{background:var(--ok);border-color:var(--ok);color:#fff;}
 
-  .progress-track{width:100%;height:6px;border-radius:999px;background:#E7E8EE;margin-top:8px;overflow:hidden;}
+  .progress-track{width:100%;height:6px;border-radius:999px;background:var(--track-bg);margin-top:8px;overflow:hidden;}
   .progress-fill{height:100%;border-radius:999px;background:var(--ok);transition:width .2s ease;}
-  .progress-fill.finished{background:#8B5CF6;}
+  .progress-fill.finished{background:var(--finished-purple);}
 
   .filterrow{padding:2px 6px 10px;position:relative;}
   .filterselect{width:100%;background:var(--card);border:1px solid var(--line);border-radius:12px;
@@ -105,22 +149,25 @@
 
   /* ---------- Détail série ---------- */
   .card{cursor:pointer;}
-  .detailhero{position:relative;height:220px;background:#dcdde3 center/cover no-repeat;}
+  .detailhero{position:relative;height:220px;background:var(--poster-bg) center/cover no-repeat;}
   .detailhero::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0) 40%,rgba(0,0,0,.65) 100%);}
-  .backrow{position:absolute;top:calc(14px + var(--safe-top));left:14px;z-index:2;}
+  .backrow{position:absolute;top:calc(14px + var(--safe-top));left:14px;z-index:2;display:flex;justify-content:space-between;width:calc(100% - 28px);}
   .backbtn{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.9);border:none;
-    display:flex;align-items:center;justify-content:center;color:var(--ink);}
+    display:flex;align-items:center;justify-content:center;color:#171A21;}
   .herotitle{position:absolute;left:18px;right:18px;bottom:14px;z-index:2;color:#fff;font-size:22px;font-weight:800;
     text-shadow:0 1px 4px rgba(0,0,0,.3);}
   .herometa{position:absolute;left:18px;right:18px;bottom:0;z-index:2;}
   .seasonlabel{font-size:12.5px;font-weight:800;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em;
     margin:20px 6px 8px;}
-  .seasonhead{display:flex;align-items:center;justify-content:space-between;cursor:pointer;
+  .seasonhead{display:flex;align-items:center;justify-content:space-between;gap:10px;
     margin:20px 6px 8px;padding:2px 0;}
-  .seasonhead .seasonlabel{margin:0;}
-  .seasoncount{font-size:12px;font-weight:600;color:var(--ink-soft);}
+  .seasonhead .seasonlabel{margin:0;cursor:pointer;flex:1;min-width:0;}
+  .seasonheadright{display:flex;align-items:center;gap:10px;cursor:pointer;}
+  .seasoncount{font-size:12px;font-weight:600;color:var(--ink-soft);white-space:nowrap;}
   .seasonchevron{transition:transform .15s ease;color:var(--ink-soft);display:flex;}
   .seasonchevron.open{transform:rotate(90deg);}
+  .markseasonbtn{font-size:11px;font-weight:800;color:var(--ink);background:var(--chip-bg);border:none;
+    border-radius:999px;padding:5px 10px;white-space:nowrap;text-transform:uppercase;letter-spacing:.02em;}
   .eprow{display:flex;align-items:center;gap:12px;background:var(--card);border-radius:14px;padding:12px 12px;margin:6px 0;}
   .eprow.future{opacity:.55;}
   .epinfo{flex:1;min-width:0;}
@@ -128,17 +175,17 @@
   .eptitle{font-size:14.5px;font-weight:700;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .epdate{font-size:12px;color:var(--ink-soft);margin-top:2px;}
   .epcheck{width:32px;height:32px;min-width:32px;border-radius:50%;background:var(--bg);border:none;
-    display:flex;align-items:center;justify-content:center;color:#B9BCC6;}
-  .epcheck.done{background:#EAF9F1;color:var(--ok);}
+    display:flex;align-items:center;justify-content:center;color:var(--checkbtn-ink);}
+  .epcheck.done{background:var(--ok-bg);color:var(--ok);}
 
   .metarow{display:flex;flex-wrap:wrap;gap:7px;margin:12px 6px 4px;}
-  .metachip{padding:5px 11px;border-radius:999px;font-size:11.5px;font-weight:700;background:#EEEFF3;color:var(--ink-soft);}
-  .metachip.running{background:#E7F9EF;color:#1E9A57;}
-  .metachip.ended{background:#F1F1F4;color:#6b6f7a;}
-  .metachip.rating{background:#FFF6E0;color:#946E00;}
+  .metachip{padding:5px 11px;border-radius:999px;font-size:11.5px;font-weight:700;background:var(--chip-bg);color:var(--ink-soft);}
+  .metachip.running{background:var(--chip-running-bg);color:var(--chip-running-ink);}
+  .metachip.ended{background:var(--chip-ended-bg);color:var(--chip-ended-ink);}
+  .metachip.rating{background:var(--chip-rating-bg);color:var(--chip-rating-ink);}
 
-  .synopsis{font-size:13.5px;color:#3a3d46;line-height:1.55;margin:2px 6px 18px;}
-  .epsummary{font-size:12.5px;color:#6b6f7a;line-height:1.45;margin-top:4px;}
+  .synopsis{font-size:13.5px;color:var(--text-secondary);line-height:1.55;margin:2px 6px 18px;}
+  .epsummary{font-size:12.5px;color:var(--text-tertiary);line-height:1.45;margin-top:4px;}
   .epsummarytoggle{display:inline-flex;align-items:center;gap:3px;background:none;border:none;padding:0;
     margin-left:2px;color:var(--ink);font-weight:700;font-size:12px;cursor:pointer;}
   .epsummarytoggle svg{transition:transform .15s ease;}
@@ -153,12 +200,21 @@
   .pcard .hint a{color:var(--ink);font-weight:700;}
   .btn{display:inline-flex;align-items:center;justify-content:center;padding:12px 18px;border-radius:12px;
     font-weight:800;font-size:13.5px;border:none;margin-top:12px;}
-  .btn-dark{background:var(--ink);color:#fff;}
-  .btn-danger{background:#FCEAE7;color:var(--danger);width:100%;}
+  .btn-dark{background:var(--btn-primary-bg);color:var(--btn-primary-ink);}
+  .btn-danger{background:var(--danger-bg);color:var(--danger);width:100%;}
   .statgrid{display:flex;gap:10px;}
   .stat{flex:1;background:var(--card);border-radius:16px;padding:16px 10px;text-align:center;}
   .stat .n{font-size:24px;font-weight:800;}
   .stat .l{font-size:11px;color:var(--ink-soft);font-weight:700;margin-top:2px;text-transform:uppercase;}
+
+  .togglerow{display:flex;align-items:center;justify-content:space-between;}
+  .switch{position:relative;width:48px;height:28px;flex:none;}
+  .switch input{opacity:0;width:100%;height:100%;position:absolute;margin:0;cursor:pointer;}
+  .switchtrack{position:absolute;inset:0;background:var(--track-bg);border-radius:999px;transition:background .15s ease;}
+  .switch input:checked + .switchtrack{background:var(--ok);}
+  .switchthumb{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;
+    box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .15s ease;pointer-events:none;}
+  .switch input:checked ~ .switchthumb{transform:translateX(20px);}
 
   /* ---------- Bottom nav ---------- */
   .bottomnav{position:fixed;left:0;right:0;bottom:0;max-width:520px;margin:0 auto;background:var(--card);
@@ -167,7 +223,7 @@
   .navbtn.active{color:var(--ink);}
   .navbtn span{font-size:10.5px;font-weight:700;}
   .toast{position:fixed;left:50%;bottom:calc(90px + var(--safe-bottom));transform:translateX(-50%);
-    background:var(--ink);color:#fff;padding:10px 18px;border-radius:999px;font-size:13px;font-weight:700;
+    background:#171A21;color:#fff;padding:10px 18px;border-radius:999px;font-size:13px;font-weight:700;
     opacity:0;pointer-events:none;transition:opacity .25s ease, transform .25s ease;z-index:50;white-space:nowrap;}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px);}
   .loading{text-align:center;color:var(--ink-soft);font-size:13px;padding:24px;}
@@ -185,7 +241,7 @@ const IDB_NAME = 'monsuivi_db';
 const IDB_STORE = 'kv';
 const IDB_KEY = 'state';
 
-function defaultState(){ return { shows:{}, movies:{}, settings:{tmdbKey:''} }; }
+function defaultState(){ return { shows:{}, movies:{}, settings:{tmdbKey:'', darkMode:false} }; }
 let state = defaultState();
 
 function openIdb(){
@@ -219,17 +275,23 @@ async function idbSet(value){
 async function initState(){
   try{
     const fromIdb = await idbGet();
-    if(fromIdb){ state = Object.assign(defaultState(), fromIdb); return; }
+    if(fromIdb){ state = mergeWithDefaults(fromIdb); return; }
   }catch(e){ console.warn('Lecture IndexedDB impossible', e); }
 
   // Rien dans IndexedDB : on tente de migrer depuis l'ancien localStorage (si présent)
   try{
     const raw = localStorage.getItem(LEGACY_STORAGE_KEY);
     if(raw){
-      state = Object.assign(defaultState(), JSON.parse(raw));
+      state = mergeWithDefaults(JSON.parse(raw));
       await idbSet(state).catch(()=>{});
     }
   }catch(e){ console.warn('Migration localStorage impossible', e); }
+}
+function mergeWithDefaults(parsed){
+  const base = defaultState();
+  const merged = Object.assign(base, parsed);
+  merged.settings = Object.assign(base.settings, parsed.settings || {});
+  return merged;
 }
 
 function saveState(){
@@ -265,7 +327,7 @@ function importDataFromFile(file){
       showToast('Fichier invalide'); return;
     }
     if(confirm('Importer ce fichier remplacera toutes tes données actuelles sur cet appareil. Continuer ?')){
-      state = Object.assign(defaultState(), parsed);
+      state = mergeWithDefaults(parsed);
       saveState();
       render();
       showToast('Données importées ✓');
@@ -389,6 +451,16 @@ function toggleEpisodeWatched(showId, episodeId){
       saveState(); render();
     }
   }
+}
+function markSeasonWatched(showId, season){
+  const show = state.shows[showId]; if(!show) return;
+  const seasonEps = sortedAiredEpisodes(show).filter(e => e.season === season && e.airdate && e.airdate <= todayStr());
+  const toMark = seasonEps.filter(e => !show.watched.includes(e.id));
+  if(toMark.length === 0) return;
+  toMark.forEach(e => show.watched.push(e.id));
+  show.lastWatchedAt = Date.now();
+  saveState(); render();
+  showToast(toMark.length === 1 ? '1 épisode marqué vu' : `${toMark.length} épisodes marqués vus`);
 }
 
 /* ===================== API : TMDB (FILMS) ===================== */
@@ -701,6 +773,8 @@ function renderShowDetailScreen(){
   const seasonsHtml = seasons.map(sNum => {
     const seasonEps = bySeason[sNum];
     const watchedInSeason = seasonEps.filter(e => show.watched.includes(e.id)).length;
+    const airedInSeason = seasonEps.filter(e => e.airdate && e.airdate <= todayStr());
+    const hasUnwatchedAired = airedInSeason.some(e => !show.watched.includes(e.id));
     const defaultExpanded = Number(sNum) === defaultSeason;
     const expanded = isSeasonExpanded(show.id, sNum, defaultExpanded);
     const rows = !expanded ? '' : seasonEps.map(ep => {
@@ -718,9 +792,12 @@ function renderShowDetailScreen(){
         </div>`;
     }).join('');
     return `
-      <div class="seasonhead" data-act="toggleseason" data-showid="${show.id}" data-season="${sNum}">
-        <span class="seasonlabel">Saison ${sNum}</span>
-        <span class="seasoncount">${watchedInSeason}/${seasonEps.length} vus <span class="seasonchevron ${expanded?'open':''}">${ICON.chevron}</span></span>
+      <div class="seasonhead">
+        <span class="seasonlabel" data-act="toggleseason" data-showid="${show.id}" data-season="${sNum}">Saison ${sNum}</span>
+        <div class="seasonheadright">
+          ${hasUnwatchedAired ? `<button class="markseasonbtn" data-act="markseason" data-showid="${show.id}" data-season="${sNum}">Tout marquer vu</button>` : ''}
+          <span class="seasoncount" data-act="toggleseason" data-showid="${show.id}" data-season="${sNum}">${watchedInSeason}/${seasonEps.length} vus <span class="seasonchevron ${expanded?'open':''}">${ICON.chevron}</span></span>
+        </div>
       </div>
       ${rows}`;
   }).join('');
@@ -804,6 +881,16 @@ function renderProfilScreen(){
         <div class="stat"><div class="n">${nbMoviesWatched}</div><div class="l">Films vus</div></div>
       </div>
       <div class="pcard">
+        <div class="togglerow">
+          <label style="margin:0;">Mode sombre</label>
+          <label class="switch">
+            <input type="checkbox" id="darkmodetoggle" ${state.settings.darkMode ? 'checked' : ''}>
+            <span class="switchtrack"></span>
+            <span class="switchthumb"></span>
+          </label>
+        </div>
+      </div>
+      <div class="pcard">
         <label>Temps passé à regarder tes séries</label>
         <div style="font-size:26px;font-weight:800;margin-top:8px;">${formatDuration(totalMinutes)}</div>
         <div class="hint">Calculé à partir de la durée réelle de chaque épisode que tu as coché comme vu.</div>
@@ -833,7 +920,14 @@ function renderProfilScreen(){
 }
 
 /* ===================== RENDU GLOBAL ===================== */
+function applyTheme(){
+  const dark = !!state.settings.darkMode;
+  document.documentElement.classList.toggle('dark', dark);
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if(meta) meta.setAttribute('content', dark ? '#0E0F13' : '#F1F2F6');
+}
 function render(){
+  applyTheme();
   let body = '';
   if(nav.screen === 'series') body = renderSeriesScreen();
   else if(nav.screen === 'showdetail') body = renderShowDetailScreen();
@@ -880,6 +974,14 @@ function render(){
         importInput.value = '';
       };
     }
+    const darkToggle = document.getElementById('darkmodetoggle');
+    if(darkToggle){
+      darkToggle.onchange = (e)=>{
+        state.settings.darkMode = e.target.checked;
+        saveState();
+        applyTheme();
+      };
+    }
   }
 }
 
@@ -899,6 +1001,9 @@ document.addEventListener('click', (e)=>{
   else if(act === 'toggleseason'){
     seasonOverrides.has(el.dataset.showid+'-'+el.dataset.season) ? seasonOverrides.delete(el.dataset.showid+'-'+el.dataset.season) : seasonOverrides.add(el.dataset.showid+'-'+el.dataset.season);
     render();
+  }
+  else if(act === 'markseason'){
+    markSeasonWatched(Number(el.dataset.showid), Number(el.dataset.season));
   }
   else if(act === 'toggleepsum'){
     const epid = Number(el.dataset.epid);
