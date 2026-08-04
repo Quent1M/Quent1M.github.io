@@ -365,7 +365,7 @@ function removeShow(id){ delete state.shows[id]; saveState(); render(); }
 function markWatched(showId){
   const show = state.shows[showId]; if(!show) return;
   const { current } = nextEpisodeToWatch(show);
-  if(current){ show.watched.push(current.id); saveState(); render(); }
+  if(current){ show.watched.push(current.id); show.lastWatchedAt = Date.now(); saveState(); render(); }
 }
 function toggleEpisodeWatched(showId, episodeId){
   const show = state.shows[showId]; if(!show) return;
@@ -379,11 +379,13 @@ function toggleEpisodeWatched(showId, episodeId){
   const pos = aired.findIndex(e => e.id === episodeId);
   const previousUnwatched = pos > 0 ? aired.slice(0, pos).filter(e => !show.watched.includes(e.id)) : [];
   show.watched.push(episodeId);
+  show.lastWatchedAt = Date.now();
   saveState(); render();
   if(previousUnwatched.length > 0){
     const label = previousUnwatched.length === 1 ? '1 épisode précédent' : `${previousUnwatched.length} épisodes précédents`;
     if(confirm(`Marquer aussi les ${label} comme vus ?`)){
       previousUnwatched.forEach(e => show.watched.push(e.id));
+      show.lastWatchedAt = Date.now();
       saveState(); render();
     }
   }
@@ -454,7 +456,11 @@ function renderSeriesScreen(){
       const withProgress = withStatus(shows).filter(r => r.status !== 'nonvues');
       const filter = nav.mesFilter || 'toutes';
       let filtered = filter === 'toutes' ? withProgress : withProgress.filter(r => r.status === filter);
-      filtered.sort((a,b)=> (a.finished === b.finished ? a.show.name.localeCompare(b.show.name) : (a.finished ? 1 : -1)));
+      filtered.sort((a,b)=>{
+        if(a.finished !== b.finished) return a.finished ? 1 : -1;
+        if(!a.finished) return (b.show.lastWatchedAt||0) - (a.show.lastWatchedAt||0);
+        return a.show.name.localeCompare(b.show.name);
+      });
       if(filtered.length === 0){
         const msgMap = { toutes:'Aucune série en cours ou terminée', encours:'Aucune série en cours', terminees:'Aucune série terminée' };
         cards = `<div class="empty"><b>${msgMap[filter] || msgMap.toutes}</b>Les séries que tu commences apparaîtront ici. Retrouve celles pas encore commencées dans l'onglet dédié.</div>`;

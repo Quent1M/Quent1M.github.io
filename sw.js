@@ -1,4 +1,4 @@
-const CACHE_NAME = 'monsuivi-shell-v2';
+const CACHE_NAME = 'monsuivi-shell-v3';
 const SHELL_FILES = [
   './',
   './index.html',
