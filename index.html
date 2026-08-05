@@ -201,6 +201,7 @@
   .btn{display:inline-flex;align-items:center;justify-content:center;padding:12px 18px;border-radius:12px;
     font-weight:800;font-size:13.5px;border:none;margin-top:12px;}
   .btn-dark{background:var(--btn-primary-bg);color:var(--btn-primary-ink);}
+  .btn-ok{background:var(--ok-bg);color:var(--ok);}
   .btn-danger{background:var(--danger-bg);color:var(--danger);width:100%;}
   .statgrid{display:flex;gap:10px;}
   .stat{flex:1;background:var(--card);border-radius:16px;padding:16px 10px;text-align:center;}
@@ -481,6 +482,7 @@ function addMovie(m){
     title: m.title,
     poster: m.poster_path ? ('https://image.tmdb.org/t/p/w300' + m.poster_path) : null,
     year: (m.release_date||'').slice(0,4),
+    overview: m.overview || '',
     watched:false,
     addedAt: Date.now()
   };
@@ -491,6 +493,30 @@ function removeMovie(id){ delete state.movies[id]; saveState(); render(); }
 function toggleMovieWatched(id){
   const m = state.movies[id]; if(!m) return;
   m.watched = !m.watched; saveState(); render();
+}
+async function tmdbGetMovieDetails(id){
+  const key = tmdbKey();
+  if(!key) throw new Error('NO_KEY');
+  const url = 'https://api.themoviedb.org/3/movie/' + id + '?api_key=' + encodeURIComponent(key) + '&language=fr-FR';
+  const res = await fetch(url);
+  if(!res.ok) throw new Error('TMDB indisponible');
+  return res.json();
+}
+async function ensureMovieDetails(movieId){
+  const m = state.movies[movieId]; if(!m) return;
+  if(m.detailsLoaded) return;
+  try{
+    const data = await tmdbGetMovieDetails(movieId);
+    m.overview = data.overview || m.overview || '';
+    m.genres = (data.genres || []).map(g => g.name);
+    m.runtime = data.runtime || null;
+    m.rating = (data.vote_average != null) ? data.vote_average : null;
+    m.backdrop = data.backdrop_path ? ('https://image.tmdb.org/t/p/w780' + data.backdrop_path) : null;
+    m.releaseDate = data.release_date || '';
+    m.detailsLoaded = true;
+    saveState();
+    if(nav.screen === 'moviedetail' && nav.detailMovieId === movieId) render();
+  }catch(e){ /* silencieux */ }
 }
 
 /* ===================== ICONES ===================== */
@@ -657,7 +683,7 @@ function renderFilmsScreen(){
 function movieCard(m){
   const poster = m.poster ? `style="background-image:url('${esc(m.poster)}')"` : '';
   return `
-    <div class="card">
+    <div class="card" data-act="openmovie" data-id="${m.id}">
       <div class="poster" ${poster}></div>
       <div class="cardbody">
         <div class="badge-row"><div class="badge">Film ${ICON.chevron}</div></div>
@@ -668,6 +694,42 @@ function movieCard(m){
         <button class="checkbtn ${m.watched?'done':''}" data-act="moviewatch" data-id="${m.id}">${ICON.check}</button>
       </div>
       <button class="removeX" data-act="rmmovie" data-id="${m.id}">✕</button>
+    </div>
+  `;
+}
+
+/* ===================== RENDU : DÉTAIL FILM ===================== */
+function renderMovieDetailScreen(){
+  const m = state.movies[nav.detailMovieId];
+  if(!m){ nav.screen = 'films'; return renderFilmsScreen(); }
+  ensureMovieDetails(m.id);
+
+  const hero = m.backdrop || m.poster;
+  const heroStyle = hero ? `style="background-image:url('${esc(hero)}')"` : '';
+  const synopsis = m.overview || '';
+
+  const chips = [];
+  if(m.releaseDate || m.year){ chips.push(`<span class="metachip">${esc((m.releaseDate||'').slice(0,4) || m.year)}</span>`); }
+  if(m.runtime){
+    const h = Math.floor(m.runtime/60), mn = m.runtime%60;
+    chips.push(`<span class="metachip">${h>0?`${h} h `:''}${mn} min</span>`);
+  }
+  if(m.rating){ chips.push(`<span class="metachip rating">★ ${m.rating.toFixed ? m.rating.toFixed(1) : m.rating}</span>`); }
+  (m.genres||[]).forEach(g => chips.push(`<span class="metachip">${esc(g)}</span>`));
+  const metaHtml = chips.length ? `<div class="metarow">${chips.join('')}</div>` : '';
+
+  return `
+    <div class="detailhero" ${heroStyle}>
+      <div class="backrow"><button class="backbtn" data-act="backtofilms">${ICON.chevronleft}</button></div>
+      <div class="herotitle">${esc(m.title)}</div>
+    </div>
+    <div class="content" style="padding-top:14px;">
+      ${metaHtml}
+      ${synopsis ? `<div class="synopsis">${esc(synopsis)}</div>` : `<div class="loading" style="padding:12px 0;">Chargement des infos…</div>`}
+      <button class="btn ${m.watched?'btn-ok':'btn-dark'}" data-act="moviewatch" data-id="${m.id}" style="width:100%;">
+        ${m.watched ? 'Vu ✓ — marquer comme non vu' : 'Marquer comme vu'}
+      </button>
+      <button class="btn btn-danger" data-act="rmmovie" data-id="${m.id}" style="margin-top:10px;">Retirer ce film de ma liste</button>
     </div>
   `;
 }
@@ -932,10 +994,11 @@ function render(){
   if(nav.screen === 'series') body = renderSeriesScreen();
   else if(nav.screen === 'showdetail') body = renderShowDetailScreen();
   else if(nav.screen === 'films') body = renderFilmsScreen();
+  else if(nav.screen === 'moviedetail') body = renderMovieDetailScreen();
   else if(nav.screen === 'decouvrir') body = renderDecouvrirScreen();
   else body = renderProfilScreen();
 
-  const showNav = nav.screen !== 'showdetail';
+  const showNav = nav.screen !== 'showdetail' && nav.screen !== 'moviedetail';
   document.getElementById('app').innerHTML = `
     ${body}
     ${showNav ? `
@@ -997,6 +1060,8 @@ document.addEventListener('click', (e)=>{
   else if(act === 'watch'){ e.stopPropagation(); markWatched(id); }
   else if(act === 'openshow'){ nav.screen = 'showdetail'; nav.detailShowId = Number(id); render(); }
   else if(act === 'backtoseries'){ nav.screen = 'series'; render(); }
+  else if(act === 'openmovie'){ nav.screen = 'moviedetail'; nav.detailMovieId = Number(id); render(); }
+  else if(act === 'backtofilms'){ nav.screen = 'films'; render(); }
   else if(act === 'toggleep'){ toggleEpisodeWatched(Number(el.dataset.showid), Number(el.dataset.epid)); }
   else if(act === 'toggleseason'){
     seasonOverrides.has(el.dataset.showid+'-'+el.dataset.season) ? seasonOverrides.delete(el.dataset.showid+'-'+el.dataset.season) : seasonOverrides.add(el.dataset.showid+'-'+el.dataset.season);
