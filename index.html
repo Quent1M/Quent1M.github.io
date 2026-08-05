@@ -120,11 +120,11 @@
     color:#fff;border:none;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;}
 
   /* ---------- Search / discover ---------- */
-  .searchwrap{padding:10px 20px 4px;position:sticky;top:0;background:var(--bg);z-index:5;}
+  .searchwrap{padding:10px 20px 4px;position:sticky;top:var(--safe-top);background:var(--bg);z-index:5;}
   .searchbar{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);
     border-radius:14px;padding:10px 14px;}
   .searchbar input{border:none;outline:none;background:transparent;font-size:15px;flex:1;color:var(--ink);font-family:inherit;}
-  .segrow{display:flex;background:var(--track-bg);border-radius:12px;padding:4px;margin:12px 20px 0;gap:4px;}
+  .segrow{display:flex;background:var(--track-bg);border-radius:12px;padding:4px;margin:calc(12px + var(--safe-top)) 20px 0;gap:4px;}
   .seg{flex:1;text-align:center;padding:9px 0;border-radius:9px;font-size:13px;font-weight:800;color:var(--ink-soft);}
   .seg.active{background:var(--card);color:var(--ink);}
   .resrow{display:flex;align-items:center;gap:12px;background:var(--card);border-radius:16px;padding:10px;margin:10px 0;}
@@ -874,7 +874,7 @@ function renderProfilScreen(){
   const nbMoviesWatched = Object.values(state.movies).filter(m=>m.watched).length;
   const totalMinutes = computeTotalWatchMinutes();
   return `
-    <div class="content" style="padding-top:20px;">
+    <div class="content" style="padding-top:calc(20px + var(--safe-top));">
       <div class="statgrid">
         <div class="stat"><div class="n">${nbShows}</div><div class="l">Séries suivies</div></div>
         <div class="stat"><div class="n">${nbEpWatched}</div><div class="l">Épisodes vus</div></div>
