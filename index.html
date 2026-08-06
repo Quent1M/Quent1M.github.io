@@ -968,8 +968,10 @@ function renderProfilScreen(){
       <div class="pcard">
         <label>Transférer mes données</label>
         <div class="hint">Tes données restent uniquement sur cet appareil (aucun compte, aucun serveur). Pour les retrouver sur un autre appareil (ex : ton iPhone), exporte-les ici puis importe le fichier là-bas.</div>
-        <button class="btn btn-dark" data-act="exportdata">Exporter mes données</button>
-        <button class="btn btn-dark" data-act="importdata" style="margin-left:8px;background:var(--card);color:var(--ink);border:1.4px solid var(--ink);">Importer des données</button>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-dark" data-act="exportdata" style="flex:1;margin-top:12px;">Exporter</button>
+          <button class="btn" data-act="importdata" style="flex:1;margin-top:12px;background:var(--card);color:var(--ink);border:1.4px solid var(--ink);">Importer</button>
+        </div>
         <input type="file" id="importFileInput" accept="application/json" style="display:none;">
       </div>
       <div class="pcard">
