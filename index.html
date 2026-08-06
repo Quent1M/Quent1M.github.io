@@ -242,7 +242,7 @@ const IDB_NAME = 'monsuivi_db';
 const IDB_STORE = 'kv';
 const IDB_KEY = 'state';
 
-function defaultState(){ return { shows:{}, movies:{}, settings:{tmdbKey:'', darkMode:false} }; }
+function defaultState(){ return { shows:{}, movies:{}, settings:{tmdbKey:'', darkMode:false, appLanguage:'fr'} }; }
 let state = defaultState();
 
 function openIdb(){
@@ -298,7 +298,7 @@ function mergeWithDefaults(parsed){
 function saveState(){
   idbSet(state).catch((e)=>{
     console.warn('Sauvegarde IndexedDB impossible', e);
-    showToast('Erreur de sauvegarde');
+    showToast(t('toastSaveError'));
   });
 }
 function exportData(){
@@ -314,8 +314,8 @@ function exportData(){
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    showToast('Export téléchargé ✓');
-  }catch(e){ showToast("Erreur lors de l'export"); }
+    showToast(t('toastExportDone'));
+  }catch(e){ showToast(t('toastExportFailed')); }
 }
 function importDataFromFile(file){
   if(!file) return;
@@ -323,22 +323,125 @@ function importDataFromFile(file){
   reader.onload = (e) => {
     let parsed;
     try{ parsed = JSON.parse(e.target.result); }
-    catch(err){ showToast('Fichier invalide'); return; }
+    catch(err){ showToast(t('toastImportInvalid')); return; }
     if(!parsed || typeof parsed !== 'object' || !parsed.shows || !parsed.movies){
-      showToast('Fichier invalide'); return;
+      showToast(t('toastImportInvalid')); return;
     }
-    if(confirm('Importer ce fichier remplacera toutes tes données actuelles sur cet appareil. Continuer ?')){
+    if(confirm(t('importConfirm'))){
       state = mergeWithDefaults(parsed);
       saveState();
       render();
-      showToast('Données importées ✓');
+      showToast(t('toastImportDone'));
     }
   };
-  reader.onerror = () => showToast('Lecture du fichier impossible');
+  reader.onerror = () => showToast(t('toastImportReadFail'));
   reader.readAsText(file);
 }
 
 let nav = { screen:'series', seriesTab:'mes', filmsTab:'avoir', decouvrirTab:'series', mesFilter:'toutes' };
+
+/* ===================== I18N (app UI, Films & Découvrir only — Séries stays English) ===================== */
+const TMDB_LANG_MAP = { fr:'fr-FR', en:'en-US', es:'es-ES' };
+const I18N = {
+  fr: {
+    navSeries:'Séries', navFilms:'Films', navDiscover:'Découvrir', navProfile:'Profil',
+    filmsToWatch:'À voir', filmsWatched:'Vus',
+    filmsEmptyToWatchTitle:'Aucun film à voir', filmsEmptyToWatchBody:"Ajoute des films depuis l'onglet Découvrir.",
+    filmsEmptyWatchedTitle:'Aucun film vu', filmsEmptyWatchedBody:'Coche un film "à voir" pour le retrouver ici.',
+    filmBadge:'Film',
+    movieMarkWatched:'Marquer comme vu', movieMarkUnwatched:'Vu ✓ — marquer comme non vu',
+    movieRemove:'Retirer ce film de ma liste', movieRemoveConfirm:'Retirer ce film de ta liste ?',
+    movieLoading:'Chargement des infos…',
+    discoverSeries:'Séries', discoverFilms:'Films',
+    searchPlaceholderSeries:'Chercher une série…', searchPlaceholderFilms:'Chercher un film…',
+    searching:'Recherche en cours…',
+    discoverEmptyTitle:'Trouve une série ou un film', discoverEmptyBody:'Tape au moins 2 lettres pour lancer la recherche.',
+    toastAlreadyInList:'Déjà dans ta liste', toastMovieAdded:'ajouté ✓', toastNeedTmdbKey:'Ajoute ta clé TMDB dans Profil',
+    toastSearchFailed:'Recherche impossible',
+    profileShowsTracked:'Séries suivies', profileEpisodesWatched:'Épisodes vus', profileMoviesWatched:'Films vus',
+    darkMode:'Mode sombre',
+    appLanguage:'Langue de l\'app', appLanguageHint:'S\'applique à l\'interface et au contenu des films. La section Séries reste en anglais pour le moment.',
+    watchTimeTitle:'Temps passé à regarder tes séries', watchTimeHint:'Calculé à partir de la durée réelle de chaque épisode que tu as coché comme vu.',
+    tmdbKeyLabel:'Clé API TMDB', tmdbKeyHint1:'Nécessaire pour chercher des films. Crée une clé gratuite sur', tmdbKeyHint2:', puis colle la "Clé API (v3 auth)" ci-dessus.',
+    save:'Enregistrer', toastKeySaved:'Clé enregistrée ✓',
+    transferTitle:'Transférer mes données', transferHint:'Tes données restent uniquement sur cet appareil (aucun compte, aucun serveur). Pour les retrouver sur un autre appareil (ex : ton iPhone), exporte-les ici puis importe le fichier là-bas.',
+    export:'Exporter', import:'Importer',
+    toastExportDone:'Export téléchargé ✓', toastExportFailed:"Erreur lors de l'export",
+    toastImportInvalid:'Fichier invalide', toastImportDone:'Données importées ✓', toastImportReadFail:'Lecture du fichier impossible',
+    importConfirm:'Importer ce fichier remplacera toutes tes données actuelles sur cet appareil. Continuer ?',
+    resetTitle:'Réinitialiser', resetHint:'Supprime définitivement toutes tes séries, films et épisodes vus sur cet appareil.',
+    resetBtn:'Réinitialiser mes données', resetConfirm:'Cela supprime définitivement toutes tes séries, films et épisodes vus. Continuer ?',
+    toastSaveError:'Erreur de sauvegarde', loadingData:'Chargement de tes données…',
+  },
+  en: {
+    navSeries:'Series', navFilms:'Movies', navDiscover:'Discover', navProfile:'Profile',
+    filmsToWatch:'To Watch', filmsWatched:'Watched',
+    filmsEmptyToWatchTitle:'No movies to watch', filmsEmptyToWatchBody:'Add movies from the Discover tab.',
+    filmsEmptyWatchedTitle:'No movies watched', filmsEmptyWatchedBody:'Check a movie as watched to see it here.',
+    filmBadge:'Movie',
+    movieMarkWatched:'Mark as watched', movieMarkUnwatched:'Watched ✓ — mark as unwatched',
+    movieRemove:'Remove this movie from my list', movieRemoveConfirm:'Remove this movie from your list?',
+    movieLoading:'Loading info…',
+    discoverSeries:'Series', discoverFilms:'Movies',
+    searchPlaceholderSeries:'Search for a show…', searchPlaceholderFilms:'Search for a movie…',
+    searching:'Searching…',
+    discoverEmptyTitle:'Find a show or a movie', discoverEmptyBody:'Type at least 2 letters to search.',
+    toastAlreadyInList:'Already in your list', toastMovieAdded:'added ✓', toastNeedTmdbKey:'Add your TMDB key in Profile',
+    toastSearchFailed:'Search failed',
+    profileShowsTracked:'Shows tracked', profileEpisodesWatched:'Episodes watched', profileMoviesWatched:'Movies watched',
+    darkMode:'Dark mode',
+    appLanguage:'App language', appLanguageHint:'Applies to the interface and movie content. The Series section stays in English for now.',
+    watchTimeTitle:'Time spent watching your shows', watchTimeHint:'Calculated from the real runtime of each episode you checked as watched.',
+    tmdbKeyLabel:'TMDB API key', tmdbKeyHint1:'Needed to search for movies. Create a free key at', tmdbKeyHint2:', then paste the "API Key (v3 auth)" above.',
+    save:'Save', toastKeySaved:'Key saved ✓',
+    transferTitle:'Transfer my data', transferHint:'Your data stays only on this device (no account, no server). To find it on another device (e.g. your iPhone), export it here then import the file there.',
+    export:'Export', import:'Import',
+    toastExportDone:'Export downloaded ✓', toastExportFailed:'Export failed',
+    toastImportInvalid:'Invalid file', toastImportDone:'Data imported ✓', toastImportReadFail:'Could not read file',
+    importConfirm:'Importing this file will replace all your current data on this device. Continue?',
+    resetTitle:'Reset', resetHint:'Permanently deletes all your shows, movies and watched episodes on this device.',
+    resetBtn:'Reset my data', resetConfirm:'This will permanently delete all your shows, movies and watched episodes. Continue?',
+    toastSaveError:'Save error', loadingData:'Loading your data…',
+  },
+  es: {
+    navSeries:'Series', navFilms:'Películas', navDiscover:'Descubrir', navProfile:'Perfil',
+    filmsToWatch:'Por ver', filmsWatched:'Vistas',
+    filmsEmptyToWatchTitle:'No hay películas por ver', filmsEmptyToWatchBody:'Añade películas desde la pestaña Descubrir.',
+    filmsEmptyWatchedTitle:'No hay películas vistas', filmsEmptyWatchedBody:'Marca una película como vista para verla aquí.',
+    filmBadge:'Película',
+    movieMarkWatched:'Marcar como vista', movieMarkUnwatched:'Vista ✓ — marcar como no vista',
+    movieRemove:'Quitar esta película de mi lista', movieRemoveConfirm:'¿Quitar esta película de tu lista?',
+    movieLoading:'Cargando información…',
+    discoverSeries:'Series', discoverFilms:'Películas',
+    searchPlaceholderSeries:'Buscar una serie…', searchPlaceholderFilms:'Buscar una película…',
+    searching:'Buscando…',
+    discoverEmptyTitle:'Encuentra una serie o película', discoverEmptyBody:'Escribe al menos 2 letras para buscar.',
+    toastAlreadyInList:'Ya está en tu lista', toastMovieAdded:'añadida ✓', toastNeedTmdbKey:'Añade tu clave TMDB en Perfil',
+    toastSearchFailed:'Búsqueda fallida',
+    profileShowsTracked:'Series seguidas', profileEpisodesWatched:'Episodios vistos', profileMoviesWatched:'Películas vistas',
+    darkMode:'Modo oscuro',
+    appLanguage:'Idioma de la app', appLanguageHint:'Se aplica a la interfaz y al contenido de las películas. La sección Series permanece en inglés por ahora.',
+    watchTimeTitle:'Tiempo dedicado a tus series', watchTimeHint:'Calculado a partir de la duración real de cada episodio marcado como visto.',
+    tmdbKeyLabel:'Clave API de TMDB', tmdbKeyHint1:'Necesaria para buscar películas. Crea una clave gratis en', tmdbKeyHint2:', luego pega la "Clave API (v3 auth)" arriba.',
+    save:'Guardar', toastKeySaved:'Clave guardada ✓',
+    transferTitle:'Transferir mis datos', transferHint:'Tus datos permanecen solo en este dispositivo (sin cuenta, sin servidor). Para encontrarlos en otro dispositivo (ej: tu iPhone), expórtalos aquí e impórtalos allí.',
+    export:'Exportar', import:'Importar',
+    toastExportDone:'Exportación descargada ✓', toastExportFailed:'Error al exportar',
+    toastImportInvalid:'Archivo inválido', toastImportDone:'Datos importados ✓', toastImportReadFail:'No se pudo leer el archivo',
+    importConfirm:'Importar este archivo reemplazará todos tus datos actuales en este dispositivo. ¿Continuar?',
+    resetTitle:'Reiniciar', resetHint:'Elimina permanentemente todas tus series, películas y episodios vistos en este dispositivo.',
+    resetBtn:'Reiniciar mis datos', resetConfirm:'Esto eliminará permanentemente todas tus series, películas y episodios vistos. ¿Continuar?',
+    toastSaveError:'Error al guardar', loadingData:'Cargando tus datos…',
+  }
+};
+function t(key){
+  const lang = (state.settings && state.settings.appLanguage) || 'fr';
+  return (I18N[lang] && I18N[lang][key]) || I18N.fr[key] || key;
+}
+function tmdbLangCode(){
+  const lang = (state.settings && state.settings.appLanguage) || 'fr';
+  return TMDB_LANG_MAP[lang] || 'fr-FR';
+}
 
 function todayStr(){ return new Date().toISOString().slice(0,10); }
 function fmtDate(d){
@@ -361,7 +464,7 @@ async function tvmazeSearch(q){
 }
 async function tvmazeEpisodes(showId){
   const res = await fetch('https://api.tvmaze.com/shows/' + showId + '/episodes');
-  if(!res.ok) throw new Error('Impossible de charger les épisodes');
+  if(!res.ok) throw new Error('Could not load episodes');
   return res.json();
 }
 
@@ -384,7 +487,7 @@ function stripHtml(html){
   return html.replace(/<[^>]+>/g,' ').replace(/&nbsp;/g,' ').replace(/\s+/g,' ').trim();
 }
 async function addShow(showObj){
-  if(state.shows[showObj.id]) { showToast('Déjà dans ta liste'); return; }
+  if(state.shows[showObj.id]) { showToast('Already in your list'); return; }
   try{
     const episodes = await tvmazeEpisodes(showObj.id);
     state.shows[showObj.id] = {
@@ -403,8 +506,8 @@ async function addShow(showObj){
       addedAt: Date.now()
     };
     saveState();
-    showToast(showObj.name + ' ajoutée ✓');
-  }catch(e){ showToast("Erreur lors de l'ajout"); }
+    showToast(showObj.name + ' added ✓');
+  }catch(e){ showToast("Error adding show"); }
 }
 async function ensureShowSummary(showId){
   const show = state.shows[showId]; if(!show) return;
@@ -445,8 +548,8 @@ function toggleEpisodeWatched(showId, episodeId){
   show.lastWatchedAt = Date.now();
   saveState(); render();
   if(previousUnwatched.length > 0){
-    const label = previousUnwatched.length === 1 ? '1 épisode précédent' : `${previousUnwatched.length} épisodes précédents`;
-    if(confirm(`Marquer aussi les ${label} comme vus ?`)){
+    const label = previousUnwatched.length === 1 ? '1 previous episode' : `${previousUnwatched.length} previous episodes`;
+    if(confirm(`Mark ${label} as watched too?`)){
       previousUnwatched.forEach(e => show.watched.push(e.id));
       show.lastWatchedAt = Date.now();
       saveState(); render();
@@ -461,7 +564,7 @@ function markSeasonWatched(showId, season){
   toMark.forEach(e => show.watched.push(e.id));
   show.lastWatchedAt = Date.now();
   saveState(); render();
-  showToast(toMark.length === 1 ? '1 épisode marqué vu' : `${toMark.length} épisodes marqués vus`);
+  showToast(toMark.length === 1 ? '1 episode marked watched' : `${toMark.length} episodes marked watched`);
 }
 
 /* ===================== API : TMDB (FILMS) ===================== */
@@ -470,13 +573,13 @@ async function tmdbSearchMovie(q){
   const key = tmdbKey();
   if(!key) throw new Error('NO_KEY');
   const url = 'https://api.themoviedb.org/3/search/movie?api_key=' + encodeURIComponent(key) +
-    '&language=fr-FR&query=' + encodeURIComponent(q);
+    '&language=' + tmdbLangCode() + '&query=' + encodeURIComponent(q);
   const res = await fetch(url);
   if(!res.ok) throw new Error('TMDB indisponible');
   return res.json();
 }
 function addMovie(m){
-  if(state.movies[m.id]){ showToast('Déjà dans ta liste'); return; }
+  if(state.movies[m.id]){ showToast(t('toastAlreadyInList')); return; }
   state.movies[m.id] = {
     id: m.id,
     title: m.title,
@@ -487,7 +590,7 @@ function addMovie(m){
     addedAt: Date.now()
   };
   saveState();
-  showToast(m.title + ' ajouté ✓');
+  showToast(m.title + ' ' + t('toastMovieAdded'));
 }
 function removeMovie(id){ delete state.movies[id]; saveState(); render(); }
 function toggleMovieWatched(id){
@@ -497,7 +600,7 @@ function toggleMovieWatched(id){
 async function tmdbGetMovieDetails(id){
   const key = tmdbKey();
   if(!key) throw new Error('NO_KEY');
-  const url = 'https://api.themoviedb.org/3/movie/' + id + '?api_key=' + encodeURIComponent(key) + '&language=fr-FR';
+  const url = 'https://api.themoviedb.org/3/movie/' + id + '?api_key=' + encodeURIComponent(key) + '&language=' + tmdbLangCode();
   const res = await fetch(url);
   if(!res.ok) throw new Error('TMDB indisponible');
   return res.json();
@@ -549,7 +652,7 @@ function renderSeriesScreen(){
 
   if(tab === 'mes'){
     if(shows.length === 0){
-      cards = `<div class="empty"><b>Aucune série suivie</b>Ajoute des séries depuis l'onglet Découvrir pour commencer ton suivi.</div>`;
+      cards = `<div class="empty"><b>No shows yet</b>Add shows from the Discover tab to start tracking.</div>`;
     }else{
       const withProgress = withStatus(shows).filter(r => r.status !== 'nonvues');
       const filter = nav.mesFilter || 'toutes';
@@ -560,20 +663,20 @@ function renderSeriesScreen(){
         return a.show.name.localeCompare(b.show.name);
       });
       if(filtered.length === 0){
-        const msgMap = { toutes:'Aucune série en cours ou terminée', encours:'Aucune série en cours', terminees:'Aucune série terminée' };
-        cards = `<div class="empty"><b>${msgMap[filter] || msgMap.toutes}</b>Les séries que tu commences apparaîtront ici. Retrouve celles pas encore commencées dans l'onglet dédié.</div>`;
+        const msgMap = { toutes:'No ongoing or finished shows', encours:'No shows in progress', terminees:'No finished shows' };
+        cards = `<div class="empty"><b>${msgMap[filter] || msgMap.toutes}</b>Shows you start watching will appear here. Find the ones you haven't started yet in their own tab.</div>`;
       }else{
         cards = filtered.map(r => showSummaryCard(r.show)).join('');
       }
     }
   } else if(tab === 'nonvues'){
     if(shows.length === 0){
-      cards = `<div class="empty"><b>Aucune série suivie</b>Ajoute des séries depuis l'onglet Découvrir pour commencer ton suivi.</div>`;
+      cards = `<div class="empty"><b>No shows yet</b>Add shows from the Discover tab to start tracking.</div>`;
     }else{
       const notStarted = withStatus(shows).filter(r => r.status === 'nonvues');
       notStarted.sort((a,b)=> a.show.name.localeCompare(b.show.name));
       if(notStarted.length === 0){
-        cards = `<div class="empty"><b>Rien de pas commencé</b>Toutes tes séries suivies ont au moins un épisode vu.</div>`;
+        cards = `<div class="empty"><b>Nothing unstarted</b>All your tracked shows have at least one episode watched.</div>`;
       }else{
         cards = notStarted.map(r => showSummaryCard(r.show)).join('');
       }
@@ -582,7 +685,7 @@ function renderSeriesScreen(){
     const rows = shows.map(s => ({show:s, ...nextEpisodeToWatch(s)})).filter(r => r.current);
     rows.sort((a,b)=> a.current.airdate.localeCompare(b.current.airdate));
     if(rows.length === 0){
-      cards = `<div class="empty"><b>Rien à voir pour l'instant</b>Ajoute des séries depuis l'onglet Découvrir pour commencer ton suivi.</div>`;
+      cards = `<div class="empty"><b>Nothing to watch right now</b>Add shows from the Discover tab to start tracking.</div>`;
     }else{
       cards = rows.map(r => episodeCard(r.show, r.current, r.backlog, false)).join('');
     }
@@ -590,7 +693,7 @@ function renderSeriesScreen(){
     const rows = shows.map(s => ({show:s, ep: nextEpisodeUpcoming(s)})).filter(r => r.ep);
     rows.sort((a,b)=> (a.ep.airdate||'9999').localeCompare(b.ep.airdate||'9999'));
     if(rows.length === 0){
-      cards = `<div class="empty"><b>Aucun épisode à venir</b>Les prochaines diffusions de tes séries suivies apparaîtront ici.</div>`;
+      cards = `<div class="empty"><b>No upcoming episodes</b>Upcoming airdates for your tracked shows will appear here.</div>`;
     }else{
       cards = rows.map(r => episodeCard(r.show, r.ep, 0, true)).join('');
     }
@@ -599,19 +702,19 @@ function renderSeriesScreen(){
   const filterDropdown = tab !== 'mes' ? '' : `
     <div class="filterrow">
       <select class="filterselect" id="mesfilter">
-        <option value="toutes" ${nav.mesFilter==='toutes'?'selected':''}>Toutes (en cours + terminées)</option>
-        <option value="encours" ${nav.mesFilter==='encours'?'selected':''}>En cours</option>
-        <option value="terminees" ${nav.mesFilter==='terminees'?'selected':''}>Terminées</option>
+        <option value="toutes" ${nav.mesFilter==='toutes'?'selected':''}>All (ongoing + finished)</option>
+        <option value="encours" ${nav.mesFilter==='encours'?'selected':''}>In progress</option>
+        <option value="terminees" ${nav.mesFilter==='terminees'?'selected':''}>Finished</option>
       </select>
       <span class="filterchevron">${ICON.chevron}</span>
     </div>`;
 
   return `
     <div class="toptabs">
-      <div class="toptab ${tab==='mes'?'active':''}" data-act="stab" data-val="mes">Mes séries</div>
-      <div class="toptab ${tab==='avoir'?'active':''}" data-act="stab" data-val="avoir">À voir</div>
-      <div class="toptab ${tab==='avenir'?'active':''}" data-act="stab" data-val="avenir">À venir</div>
-      <div class="toptab ${tab==='nonvues'?'active':''}" data-act="stab" data-val="nonvues">Pas commencées</div>
+      <div class="toptab ${tab==='mes'?'active':''}" data-act="stab" data-val="mes">My Shows</div>
+      <div class="toptab ${tab==='avoir'?'active':''}" data-act="stab" data-val="avoir">To Watch</div>
+      <div class="toptab ${tab==='avenir'?'active':''}" data-act="stab" data-val="avenir">Upcoming</div>
+      <div class="toptab ${tab==='nonvues'?'active':''}" data-act="stab" data-val="nonvues">Not Started</div>
     </div>
     <div class="content">${filterDropdown}${cards}</div>
   `;
@@ -628,7 +731,7 @@ function showSummaryCard(show){
       <div class="poster" ${poster}></div>
       <div class="cardbody">
         <div class="se" style="font-size:16px;">${esc(show.name)}</div>
-        <div class="date-sub">${watched} / ${total} épisodes vus${finished ? ' · À jour ✓' : ''}</div>
+        <div class="date-sub">${watched} / ${total} episodes watched${finished ? ' · Up to date ✓' : ''}</div>
         <div class="progress-track"><div class="progress-fill ${finished?'finished':''}" style="width:${pct}%;"></div></div>
       </div>
       <div class="check"></div>
@@ -647,8 +750,8 @@ function episodeCard(show, ep, backlog, upcoming){
           <div class="badge">${esc(show.name)} ${ICON.chevron}</div>
         </div>
         <div class="se">${seLabel}${backlog>0?`<span class="plus">+${backlog}</span>`:''}${isPremiere?'<span class="tag">Premiere</span>':''}</div>
-        <div class="title">${esc(ep.name || 'Sans titre')}</div>
-        ${upcoming ? `<div class="date-sub">${ep.airdate ? fmtDate(ep.airdate) : 'Date à confirmer'}</div>` : ''}
+        <div class="title">${esc(ep.name || 'Untitled')}</div>
+        ${upcoming ? `<div class="date-sub">${ep.airdate ? fmtDate(ep.airdate) : 'Date TBA'}</div>` : ''}
       </div>
       <div class="check">
         ${upcoming ? '' : `<button class="checkbtn" data-act="watch" data-id="${show.id}">${ICON.check}</button>`}
@@ -667,15 +770,15 @@ function renderFilmsScreen(){
   let cards;
   if(filtered.length===0){
     cards = tab==='avoir'
-      ? `<div class="empty"><b>Aucun film à voir</b>Ajoute des films depuis l'onglet Découvrir.</div>`
-      : `<div class="empty"><b>Aucun film vu</b>Coche un film "à voir" pour le retrouver ici.</div>`;
+      ? `<div class="empty"><b>${t('filmsEmptyToWatchTitle')}</b>${t('filmsEmptyToWatchBody')}</div>`
+      : `<div class="empty"><b>${t('filmsEmptyWatchedTitle')}</b>${t('filmsEmptyWatchedBody')}</div>`;
   }else{
     cards = filtered.map(m => movieCard(m)).join('');
   }
   return `
     <div class="toptabs">
-      <div class="toptab ${tab==='avoir'?'active':''}" data-act="ftab" data-val="avoir">À voir</div>
-      <div class="toptab ${tab==='vus'?'active':''}" data-act="ftab" data-val="vus">Vus</div>
+      <div class="toptab ${tab==='avoir'?'active':''}" data-act="ftab" data-val="avoir">${t('filmsToWatch')}</div>
+      <div class="toptab ${tab==='vus'?'active':''}" data-act="ftab" data-val="vus">${t('filmsWatched')}</div>
     </div>
     <div class="content">${cards}</div>
   `;
@@ -686,7 +789,7 @@ function movieCard(m){
     <div class="card" data-act="openmovie" data-id="${m.id}">
       <div class="poster" ${poster}></div>
       <div class="cardbody">
-        <div class="badge-row"><div class="badge">Film ${ICON.chevron}</div></div>
+        <div class="badge-row"><div class="badge">${t('filmBadge')} ${ICON.chevron}</div></div>
         <div class="se" style="font-size:16px;">${esc(m.title)}</div>
         <div class="title">${esc(m.year||'')}</div>
       </div>
@@ -725,11 +828,11 @@ function renderMovieDetailScreen(){
     </div>
     <div class="content" style="padding-top:14px;">
       ${metaHtml}
-      ${synopsis ? `<div class="synopsis">${esc(synopsis)}</div>` : `<div class="loading" style="padding:12px 0;">Chargement des infos…</div>`}
+      ${synopsis ? `<div class="synopsis">${esc(synopsis)}</div>` : `<div class="loading" style="padding:12px 0;">${t('movieLoading')}</div>`}
       <button class="btn ${m.watched?'btn-ok':'btn-dark'}" data-act="moviewatch" data-id="${m.id}" style="width:100%;">
-        ${m.watched ? 'Vu ✓ — marquer comme non vu' : 'Marquer comme vu'}
+        ${m.watched ? t('movieMarkUnwatched') : t('movieMarkWatched')}
       </button>
-      <button class="btn btn-danger" data-act="rmmovie" data-id="${m.id}" style="margin-top:10px;">Retirer ce film de ma liste</button>
+      <button class="btn btn-danger" data-act="rmmovie" data-id="${m.id}" style="margin-top:10px;">${t('movieRemove')}</button>
     </div>
   `;
 }
@@ -758,12 +861,12 @@ async function runDiscoverSearch(q){
       const data = await tvmazeSearch(q);
       discoverResults = data.map(d => d.show);
     }else{
-      if(!tmdbKey()){ discoverLoading=false; render(); showToast('Ajoute ta clé TMDB dans Profil'); return; }
+      if(!tmdbKey()){ discoverLoading=false; render(); showToast(t('toastNeedTmdbKey')); return; }
       const data = await tmdbSearchMovie(q);
       discoverResults = data.results || [];
     }
   }catch(e){
-    showToast('Recherche impossible');
+    showToast(t('toastSearchFailed'));
     discoverResults = [];
   }
   discoverLoading = false;
@@ -773,9 +876,9 @@ function renderDecouvrirScreen(){
   const isSeries = nav.decouvrirTab === 'series';
   let results;
   if(discoverLoading){
-    results = `<div class="loading">Recherche en cours…</div>`;
+    results = `<div class="loading">${t('searching')}</div>`;
   } else if(discoverResults.length === 0){
-    results = `<div class="empty"><b>Trouve une série ou un film</b>Tape au moins 2 lettres pour lancer la recherche.</div>`;
+    results = `<div class="empty"><b>${t('discoverEmptyTitle')}</b>${t('discoverEmptyBody')}</div>`;
   } else if(isSeries){
     results = discoverResults.map(s => {
       const added = !!state.shows[s.id];
@@ -806,13 +909,13 @@ function renderDecouvrirScreen(){
   }
   return `
     <div class="segrow">
-      <div class="seg ${isSeries?'active':''}" data-act="dtab" data-val="series">Séries</div>
-      <div class="seg ${!isSeries?'active':''}" data-act="dtab" data-val="films">Films</div>
+      <div class="seg ${isSeries?'active':''}" data-act="dtab" data-val="series">${t('discoverSeries')}</div>
+      <div class="seg ${!isSeries?'active':''}" data-act="dtab" data-val="films">${t('discoverFilms')}</div>
     </div>
     <div class="searchwrap">
       <div class="searchbar">
         ${ICON.searchsm}
-        <input id="searchinput" type="search" placeholder="${isSeries?'Chercher une série…':'Chercher un film…'}" value="${esc(window.__searchVal||'')}" autocomplete="off">
+        <input id="searchinput" type="search" placeholder="${isSeries?t('searchPlaceholderSeries'):t('searchPlaceholderFilms')}" value="${esc(window.__searchVal||'')}" autocomplete="off">
       </div>
     </div>
     <div class="content">${results}</div>
@@ -855,10 +958,10 @@ function renderShowDetailScreen(){
     }).join('');
     return `
       <div class="seasonhead">
-        <span class="seasonlabel" data-act="toggleseason" data-showid="${show.id}" data-season="${sNum}">Saison ${sNum}</span>
+        <span class="seasonlabel" data-act="toggleseason" data-showid="${show.id}" data-season="${sNum}">Season ${sNum}</span>
         <div class="seasonheadright">
-          ${hasUnwatchedAired ? `<button class="markseasonbtn" data-act="markseason" data-showid="${show.id}" data-season="${sNum}">Tout marquer vu</button>` : ''}
-          <span class="seasoncount" data-act="toggleseason" data-showid="${show.id}" data-season="${sNum}">${watchedInSeason}/${seasonEps.length} vus <span class="seasonchevron ${expanded?'open':''}">${ICON.chevron}</span></span>
+          ${hasUnwatchedAired ? `<button class="markseasonbtn" data-act="markseason" data-showid="${show.id}" data-season="${sNum}">Mark all watched</button>` : ''}
+          <span class="seasoncount" data-act="toggleseason" data-showid="${show.id}" data-season="${sNum}">${watchedInSeason}/${seasonEps.length} watched <span class="seasonchevron ${expanded?'open':''}">${ICON.chevron}</span></span>
         </div>
       </div>
       ${rows}`;
@@ -875,20 +978,20 @@ function renderShowDetailScreen(){
     <div class="content" style="padding-top:14px;">
       ${metaHtml}
       ${showSynopsis ? `<div class="synopsis">${esc(showSynopsis)}</div>` : ''}
-      <div class="date-sub" style="margin:0 6px 4px;">${watchedCount} / ${totalCount} épisodes vus</div>
-      ${seasonsHtml || '<div class="empty">Aucun épisode disponible.</div>'}
-      <button class="btn btn-danger" data-act="rmshow" data-id="${show.id}" style="margin-top:24px;">Retirer cette série de mon suivi</button>
+      <div class="date-sub" style="margin:0 6px 4px;">${watchedCount} / ${totalCount} episodes watched</div>
+      ${seasonsHtml || '<div class="empty">No episodes available.</div>'}
+      <button class="btn btn-danger" data-act="rmshow" data-id="${show.id}" style="margin-top:24px;">Remove this show from my list</button>
     </div>
   `;
 }
 function showMetaHtml(show){
   const chips = [];
   if(show.status === 'Ended'){
-    const range = show.premiered ? `${show.premiered.slice(0,4)}–${show.ended ? show.ended.slice(0,4) : '?'}` : 'Terminée';
-    chips.push(`<span class="metachip ended">${esc(range)} · Terminée</span>`);
+    const range = show.premiered ? `${show.premiered.slice(0,4)}–${show.ended ? show.ended.slice(0,4) : '?'}` : 'Ended';
+    chips.push(`<span class="metachip ended">${esc(range)} · Ended</span>`);
   } else if(show.status === 'Running'){
-    const from = show.premiered ? `Depuis ${show.premiered.slice(0,4)} · ` : '';
-    chips.push(`<span class="metachip running">${esc(from)}En cours</span>`);
+    const from = show.premiered ? `Since ${show.premiered.slice(0,4)} · ` : '';
+    chips.push(`<span class="metachip running">${esc(from)}Ongoing</span>`);
   } else if(show.status){
     chips.push(`<span class="metachip">${esc(show.status)}</span>`);
   }
@@ -905,7 +1008,7 @@ function episodeSummaryHtml(ep){
   const LIMIT = 90;
   const needsToggle = text.length > LIMIT;
   const shown = isOpen || !needsToggle ? text : text.slice(0, LIMIT).trim() + '…';
-  return `<div class="epsummary">${esc(shown)}${needsToggle ? ` <button class="epsummarytoggle ${isOpen?'open':''}" data-act="toggleepsum" data-epid="${ep.id}">${isOpen?'Réduire':'Lire plus'} ${ICON.chevron}</button>` : ''}</div>`;
+  return `<div class="epsummary">${esc(shown)}${needsToggle ? ` <button class="epsummarytoggle ${isOpen?'open':''}" data-act="toggleepsum" data-epid="${ep.id}">${isOpen?'Show less':'Read more'} ${ICON.chevron}</button>` : ''}</div>`;
 }
 
 function computeTotalWatchMinutes(){
@@ -943,16 +1046,17 @@ function renderProfilScreen(){
   const nbEpWatched = Object.values(state.shows).reduce((a,s)=>a+s.watched.length,0);
   const nbMoviesWatched = Object.values(state.movies).filter(m=>m.watched).length;
   const totalMinutes = computeTotalWatchMinutes();
+  const lang = state.settings.appLanguage || 'fr';
   return `
     <div class="content" style="padding-top:calc(20px + var(--safe-top));">
       <div class="statgrid">
-        <div class="stat"><div class="n">${nbShows}</div><div class="l">Séries suivies</div></div>
-        <div class="stat"><div class="n">${nbEpWatched}</div><div class="l">Épisodes vus</div></div>
-        <div class="stat"><div class="n">${nbMoviesWatched}</div><div class="l">Films vus</div></div>
+        <div class="stat"><div class="n">${nbShows}</div><div class="l">${t('profileShowsTracked')}</div></div>
+        <div class="stat"><div class="n">${nbEpWatched}</div><div class="l">${t('profileEpisodesWatched')}</div></div>
+        <div class="stat"><div class="n">${nbMoviesWatched}</div><div class="l">${t('profileMoviesWatched')}</div></div>
       </div>
       <div class="pcard">
         <div class="togglerow">
-          <label style="margin:0;">Mode sombre</label>
+          <label style="margin:0;">${t('darkMode')}</label>
           <label class="switch">
             <input type="checkbox" id="darkmodetoggle" ${state.settings.darkMode ? 'checked' : ''}>
             <span class="switchtrack"></span>
@@ -961,31 +1065,39 @@ function renderProfilScreen(){
         </div>
       </div>
       <div class="pcard">
-        <label>Temps passé à regarder tes séries</label>
+        <label>${t('appLanguage')}</label>
+        <select class="filterselect" id="applangselect" style="margin-top:8px;">
+          <option value="fr" ${lang==='fr'?'selected':''}>Français</option>
+          <option value="en" ${lang==='en'?'selected':''}>English</option>
+          <option value="es" ${lang==='es'?'selected':''}>Español</option>
+        </select>
+        <div class="hint">${t('appLanguageHint')}</div>
+      </div>
+      <div class="pcard">
+        <label>${t('watchTimeTitle')}</label>
         <div style="font-size:26px;font-weight:800;margin-top:8px;">${formatDuration(totalMinutes)}</div>
-        <div class="hint">Calculé à partir de la durée réelle de chaque épisode que tu as coché comme vu.</div>
+        <div class="hint">${t('watchTimeHint')}</div>
       </div>
       <div class="pcard">
-        <label>Clé API TMDB</label>
-        <input type="text" id="tmdbkeyinput" placeholder="Colle ta clé API v3 ici" value="${esc(state.settings.tmdbKey)}">
-        <div class="hint">Nécessaire pour chercher des films. Crée une clé gratuite sur
-          <a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noopener">themoviedb.org/settings/api</a>,
-          puis colle la "Clé API (v3 auth)" ci-dessus.</div>
-        <button class="btn btn-dark" data-act="savekey">Enregistrer</button>
+        <label>${t('tmdbKeyLabel')}</label>
+        <input type="text" id="tmdbkeyinput" placeholder="${lang==='fr'?'Colle ta clé API v3 ici':(lang==='es'?'Pega tu clave API v3 aquí':'Paste your v3 API key here')}" value="${esc(state.settings.tmdbKey)}">
+        <div class="hint">${t('tmdbKeyHint1')}
+          <a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noopener">themoviedb.org/settings/api</a>${t('tmdbKeyHint2')}</div>
+        <button class="btn btn-dark" data-act="savekey">${t('save')}</button>
       </div>
       <div class="pcard">
-        <label>Transférer mes données</label>
-        <div class="hint">Tes données restent uniquement sur cet appareil (aucun compte, aucun serveur). Pour les retrouver sur un autre appareil (ex : ton iPhone), exporte-les ici puis importe le fichier là-bas.</div>
+        <label>${t('transferTitle')}</label>
+        <div class="hint">${t('transferHint')}</div>
         <div style="display:flex;gap:8px;">
-          <button class="btn btn-dark" data-act="exportdata" style="flex:1;margin-top:12px;">Exporter</button>
-          <button class="btn" data-act="importdata" style="flex:1;margin-top:12px;background:var(--card);color:var(--ink);border:1.4px solid var(--ink);">Importer</button>
+          <button class="btn btn-dark" data-act="exportdata" style="flex:1;margin-top:12px;">${t('export')}</button>
+          <button class="btn" data-act="importdata" style="flex:1;margin-top:12px;background:var(--card);color:var(--ink);border:1.4px solid var(--ink);">${t('import')}</button>
         </div>
         <input type="file" id="importFileInput" accept="application/json" style="display:none;">
       </div>
       <div class="pcard">
-        <label>Réinitialiser</label>
-        <div class="hint">Supprime définitivement toutes tes séries, films et épisodes vus sur cet appareil.</div>
-        <button class="btn btn-danger" data-act="reset">Réinitialiser mes données</button>
+        <label>${t('resetTitle')}</label>
+        <div class="hint">${t('resetHint')}</div>
+        <button class="btn btn-danger" data-act="reset">${t('resetBtn')}</button>
       </div>
     </div>
   `;
@@ -997,6 +1109,7 @@ function applyTheme(){
   document.documentElement.classList.toggle('dark', dark);
   const meta = document.querySelector('meta[name="theme-color"]');
   if(meta) meta.setAttribute('content', dark ? '#0E0F13' : '#F1F2F6');
+  document.documentElement.lang = (state.settings && state.settings.appLanguage) || 'fr';
 }
 function render(){
   applyTheme();
@@ -1013,10 +1126,10 @@ function render(){
     ${body}
     ${showNav ? `
     <div class="bottomnav">
-      <div class="navbtn ${nav.screen==='series'?'active':''}" data-act="nav" data-val="series">${ICON.tv}<span>Séries</span></div>
-      <div class="navbtn ${nav.screen==='films'?'active':''}" data-act="nav" data-val="films">${ICON.film}<span>Films</span></div>
-      <div class="navbtn ${nav.screen==='decouvrir'?'active':''}" data-act="nav" data-val="decouvrir">${ICON.search}<span>Découvrir</span></div>
-      <div class="navbtn ${nav.screen==='profil'?'active':''}" data-act="nav" data-val="profil">${ICON.user}<span>Profil</span></div>
+      <div class="navbtn ${nav.screen==='series'?'active':''}" data-act="nav" data-val="series">${ICON.tv}<span>${t('navSeries')}</span></div>
+      <div class="navbtn ${nav.screen==='films'?'active':''}" data-act="nav" data-val="films">${ICON.film}<span>${t('navFilms')}</span></div>
+      <div class="navbtn ${nav.screen==='decouvrir'?'active':''}" data-act="nav" data-val="decouvrir">${ICON.search}<span>${t('navDiscover')}</span></div>
+      <div class="navbtn ${nav.screen==='profil'?'active':''}" data-act="nav" data-val="profil">${ICON.user}<span>${t('navProfile')}</span></div>
     </div>` : ''}
   `;
 
@@ -1055,6 +1168,14 @@ function render(){
         applyTheme();
       };
     }
+    const langSelect = document.getElementById('applangselect');
+    if(langSelect){
+      langSelect.onchange = (e)=>{
+        state.settings.appLanguage = e.target.value;
+        saveState();
+        render();
+      };
+    }
   }
 }
 
@@ -1085,8 +1206,8 @@ document.addEventListener('click', (e)=>{
     if(expandedEpisodes.has(epid)) expandedEpisodes.delete(epid); else expandedEpisodes.add(epid);
     render();
   }
-  else if(act === 'rmshow'){ if(confirm('Retirer cette série de ton suivi ?')) removeShow(Number(id)); }
-  else if(act === 'rmmovie'){ if(confirm('Retirer ce film de ta liste ?')) removeMovie(Number(id)); }
+  else if(act === 'rmshow'){ if(confirm('Remove this show from your tracked list?')) removeShow(Number(id)); }
+  else if(act === 'rmmovie'){ if(confirm(t('movieRemoveConfirm'))) removeMovie(Number(id)); }
   else if(act === 'moviewatch'){ toggleMovieWatched(Number(id)); }
   else if(act === 'addshow'){
     const show = discoverResults.find(s=>String(s.id)===String(id));
@@ -1098,12 +1219,12 @@ document.addEventListener('click', (e)=>{
   }
   else if(act === 'savekey'){
     const v = document.getElementById('tmdbkeyinput').value.trim();
-    state.settings.tmdbKey = v; saveState(); showToast('Clé enregistrée ✓');
+    state.settings.tmdbKey = v; saveState(); showToast(t('toastKeySaved'));
   }
   else if(act === 'exportdata'){ exportData(); }
   else if(act === 'importdata'){ document.getElementById('importFileInput').click(); }
   else if(act === 'reset'){
-    if(confirm('Cela supprime définitivement toutes tes séries, films et épisodes vus. Continuer ?')){
+    if(confirm(t('resetConfirm'))){
       state = defaultState(); saveState(); render();
     }
   }
